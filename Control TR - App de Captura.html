@@ -1,0 +1,2114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Control TR · Chancay</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/JsBarcode/3.11.5/JsBarcode.all.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#073B4C;
+  --steel:#0F6674;
+  --steel-2:#1B98A0;
+  --paper:#EDF6F6;
+  --card:#FFFFFF;
+  --ink:#0B2B33;
+  --ink-soft:#4F7B82;
+  --line:#D3E7E8;
+  --amber:#E0A458;
+  --amber-bg:#FBF0DF;
+  --teal:#0E8F7D;
+  --teal-bg:#E1F5F1;
+  --red:#DC5B4F;
+  --red-bg:#FCEAE7;
+  --black-bg:#04222B;
+  --radius:10px;
+  --shadow: 0 1px 2px rgba(7,59,76,.06), 0 4px 14px rgba(7,59,76,.07);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:'Inter',system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  padding-bottom:84px;
+}
+h1,h2,h3,.display{
+  font-family:'Oswald',system-ui,sans-serif;
+  letter-spacing:.02em;
+  text-transform:uppercase;
+  margin:0;
+}
+.mono{font-family:'JetBrains Mono',monospace;}
+
+/* ---------- Header ---------- */
+header.topbar{
+  background:linear-gradient(135deg,var(--navy),var(--steel-2));
+  color:#fff;
+  padding:18px 18px 22px;
+  position:relative;
+  overflow:hidden;
+}
+header.topbar::after{
+  content:"";
+  position:absolute;
+  right:-40px; top:-40px;
+  width:160px;height:160px;
+  border:2px solid rgba(255,255,255,.08);
+  border-radius:50%;
+}
+header.topbar::before{
+  content:"";
+  position:absolute;
+  right:10px; top:30px;
+  width:90px;height:90px;
+  border:2px solid rgba(255,255,255,.08);
+  border-radius:50%;
+}
+.topbar-row{display:flex; align-items:center; justify-content:space-between; gap:12px;}
+.brand{display:flex; flex-direction:column; gap:2px;}
+.brand .eyebrow{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  letter-spacing:.14em;
+  color:#9FD8DC;
+  text-transform:uppercase;
+}
+.brand h1{font-size:22px; font-weight:600;}
+.shift-pill{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.25);
+  padding:6px 10px;
+  border-radius:999px;
+  white-space:nowrap;
+}
+.stat-strip{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+  margin-top:16px;
+}
+.stat-chip{
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:8px;
+  padding:8px 6px;
+  text-align:center;
+}
+.stat-chip .n{font-family:'Oswald',sans-serif; font-size:20px; font-weight:600; line-height:1;}
+.stat-chip .l{font-size:9.5px; color:#A9D6D9; text-transform:uppercase; letter-spacing:.06em; margin-top:3px;}
+
+/* ---------- Layout ---------- */
+main{max-width:760px; margin:0 auto; padding:16px;}
+.view{display:none;}
+.view.active{display:block; animation:fade .18s ease;}
+@keyframes fade{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;}}
+
+.section-title{
+  display:flex; align-items:baseline; justify-content:space-between;
+  margin:4px 0 12px;
+}
+.section-title h2{font-size:17px; color:var(--navy);}
+.section-title .sub{font-size:12px; color:var(--ink-soft); font-family:'Inter';text-transform:none; letter-spacing:0;}
+
+.card{
+  background:var(--card);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:16px;
+  margin-bottom:14px;
+  border:1px solid rgba(7,59,76,.05);
+}
+
+/* ---------- Forms ---------- */
+.field{margin-bottom:14px;}
+.field label{
+  display:block;
+  font-size:11.5px;
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  color:var(--ink-soft);
+  margin-bottom:6px;
+}
+.field input[type=text],
+.field input[type=number],
+.field input[type=date],
+.field select,
+.field textarea{
+  width:100%;
+  border:1.5px solid var(--line);
+  border-radius:8px;
+  padding:11px 12px;
+  font-size:15px;
+  font-family:'Inter';
+  background:#fff;
+  color:var(--ink);
+}
+.field input:focus,.field select:focus,.field textarea:focus{
+  outline:2px solid var(--steel-2);
+  outline-offset:1px;
+  border-color:var(--steel-2);
+}
+.field textarea{resize:vertical; min-height:52px;}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+.hint{font-size:11.5px; color:var(--ink-soft); margin-top:5px;}
+
+.toggle-row{display:flex; gap:8px;}
+.toggle-btn{
+  flex:1;
+  padding:12px 8px;
+  border-radius:8px;
+  border:1.5px solid var(--line);
+  background:#fff;
+  font-family:'Oswald';
+  font-size:13.5px;
+  letter-spacing:.03em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+  cursor:pointer;
+}
+.toggle-btn.active{
+  background:var(--navy);
+  border-color:var(--navy);
+  color:#fff;
+}
+.toggle-btn[data-val="SIN RETORNO"].active{background:var(--black-bg); border-color:var(--black-bg);}
+.toggle-btn[data-val="NOCHE"].active{background:#0F4C5C; border-color:#0F4C5C;}
+
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  border:none; border-radius:8px;
+  padding:13px 18px;
+  font-family:'Oswald'; font-size:14.5px; letter-spacing:.03em; text-transform:uppercase;
+  cursor:pointer;
+  width:100%;
+}
+.btn-primary{background:var(--navy); color:#fff;}
+.btn-primary:active{background:var(--steel);}
+.btn-ghost{background:#fff; color:var(--navy); border:1.5px solid var(--line);}
+.btn-small{width:auto; padding:8px 14px; font-size:12px;}
+.btn:disabled{opacity:.45; cursor:not-allowed;}
+
+/* ---------- Nav ---------- */
+nav.tabbar{
+  position:fixed; bottom:0; left:0; right:0;
+  background:#fff;
+  border-top:1px solid var(--line);
+  display:flex;
+  box-shadow:0 -2px 10px rgba(7,59,76,.08);
+  z-index:50;
+}
+nav.tabbar button{
+  flex:1;
+  background:none; border:none;
+  padding:9px 2px 8px;
+  display:flex; flex-direction:column; align-items:center; gap:3px;
+  color:var(--ink-soft);
+  font-family:'Inter';
+  cursor:pointer;
+}
+nav.tabbar button .ic{font-size:16px; line-height:1;}
+nav.tabbar button .lb{font-size:8.8px; text-transform:uppercase; letter-spacing:.02em; font-weight:600;}
+nav.tabbar button.active{color:var(--navy);}
+nav.tabbar button.active .ic{transform:translateY(-1px);}
+nav.tabbar button .badge{
+  position:absolute; margin-left:14px; margin-top:-4px;
+  background:var(--amber); color:#fff; font-size:9px; font-weight:700;
+  border-radius:999px; min-width:15px; height:15px; display:flex; align-items:center; justify-content:center;
+  padding:0 3px;
+}
+
+/* ---------- Ticket cards (registros) ---------- */
+.ticket{
+  background:var(--card);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  margin-bottom:12px;
+  overflow:hidden;
+  border:1px solid rgba(7,59,76,.05);
+  position:relative;
+}
+.ticket-top{
+  background:var(--navy);
+  color:#fff;
+  padding:12px 14px 10px;
+  display:flex; justify-content:space-between; align-items:flex-start; gap:10px;
+}
+.ticket-top .barco{font-family:'Oswald'; font-size:16px; letter-spacing:.02em;}
+.ticket-top .meta{font-family:'JetBrains Mono'; font-size:10.5px; color:#A9D6D9; margin-top:3px;}
+.ticket-top .visita{
+  font-family:'JetBrains Mono'; font-size:11px;
+  background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.25);
+  padding:4px 8px; border-radius:6px; white-space:nowrap;
+}
+.perf{
+  height:1px;
+  background-image:linear-gradient(to right, var(--line) 60%, transparent 0%);
+  background-size:9px 1px;
+  background-repeat:repeat-x;
+  margin:0 14px;
+}
+.ticket-body{padding:12px 14px 14px;}
+.ticket-mat{font-size:14px; font-weight:600; margin-bottom:6px; line-height:1.3;}
+.ticket-row{display:flex; justify-content:space-between; font-size:12.5px; color:var(--ink-soft); margin-bottom:3px;}
+.ticket-row b{color:var(--ink); font-weight:600;}
+.stamp{
+  position:absolute; top:12px; right:14px;
+  font-family:'Oswald'; font-size:10.5px; letter-spacing:.05em; text-transform:uppercase;
+  padding:4px 9px; border-radius:5px; font-weight:600;
+  transform:rotate(3deg);
+  border:1.5px solid currentColor;
+}
+.stamp.ok{color:var(--teal); background:var(--teal-bg);}
+.stamp.pend{color:var(--amber); background:var(--amber-bg);}
+.stamp.revisar{color:var(--red); background:var(--red-bg);}
+.stamp.sinret{color:#fff; background:var(--black-bg); border-color:var(--black-bg);}
+.ticket-actions{display:flex; gap:8px; margin-top:10px;}
+
+.empty{
+  text-align:center; padding:38px 20px; color:var(--ink-soft);
+}
+.empty .ic{font-size:34px; margin-bottom:8px;}
+.empty p{font-size:13px; margin:4px 0 0;}
+
+.filters{display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; margin-bottom:12px;}
+.chip-row{display:flex; gap:7px; flex-wrap:wrap; margin-top:12px;}
+.chip{
+  font-family:'Inter'; font-size:11.5px; font-weight:600;
+  padding:7px 13px; border-radius:999px; border:1.5px solid var(--line);
+  background:#fff; color:var(--ink-soft); cursor:pointer; white-space:nowrap;
+}
+.chip.active{background:var(--navy); border-color:var(--navy); color:#fff;}
+.chip.chip-all{border-color:var(--steel-2); color:var(--steel-2);}
+.chip.chip-all.active{background:var(--steel-2); border-color:var(--steel-2); color:#fff;}
+.filters select{
+  border:1.5px solid var(--line); border-radius:999px; padding:7px 12px; font-size:12px;
+  background:#fff; color:var(--ink); font-family:'Inter'; white-space:nowrap;
+}
+
+.banner{
+  background:var(--amber-bg); border:1px solid #EFCFA0; color:#8A5B14;
+  border-radius:8px; padding:10px 12px; font-size:12px; margin-bottom:14px;
+  display:flex; gap:8px; align-items:flex-start;
+}
+.banner b{display:block; margin-bottom:2px;}
+.storage-banner{
+  max-width:760px; margin:0 auto; padding:10px 16px 0;
+}
+.storage-banner .banner{margin-bottom:0;}
+
+.toast{
+  position:fixed; bottom:92px; left:50%; transform:translateX(-50%);
+  background:var(--navy); color:#fff; padding:11px 18px; border-radius:999px;
+  font-size:13px; box-shadow:0 6px 20px rgba(0,0,0,.2);
+  z-index:100; opacity:0; pointer-events:none; transition:opacity .2s, transform .2s;
+}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(-4px);}
+
+/* Repair progress mini table */
+.rep-slots{display:flex; flex-direction:column; gap:8px; margin-top:10px;}
+.rep-slot{display:grid; grid-template-columns:1fr 1fr auto; gap:8px; align-items:center;}
+.rep-slot .rm{
+  background:none; border:none; color:var(--red); font-size:16px; cursor:pointer; padding:6px;
+}
+.progress-bar{height:8px; background:var(--line); border-radius:999px; overflow:hidden; margin:8px 0;}
+.progress-fill{height:100%; background:var(--teal); border-radius:999px;}
+
+select#materialSelect, input#materialInput{font-size:14px;}
+
+.scan-row{display:flex; gap:8px;}
+.scan-row .btn-ghost{flex:0 0 auto;}
+
+.cart-item{
+  display:flex; align-items:center; gap:10px;
+  border:1.5px solid var(--line); border-radius:8px;
+  padding:10px 12px; margin-top:10px;
+}
+.cart-item .ci-info{flex:1; min-width:0;}
+.cart-item .ci-name{font-size:13px; font-weight:600; line-height:1.3;}
+.cart-item .ci-code{font-family:'JetBrains Mono'; font-size:10.5px; color:var(--ink-soft); margin-top:2px;}
+.cart-item .ci-qty{display:flex; gap:6px;}
+.cart-item .ci-qty .qtybox{display:flex; flex-direction:column; align-items:center;}
+.cart-item .ci-qty label{font-size:9px; color:var(--ink-soft); text-transform:uppercase; margin-bottom:2px;}
+.cart-item .ci-qty input{
+  width:46px; text-align:center; border:1.5px solid var(--line); border-radius:6px; padding:6px 2px; font-size:13px;
+}
+.cart-item .ci-rm{background:none; border:none; color:var(--red); font-size:18px; cursor:pointer; padding:4px;}
+.cart-empty{text-align:center; padding:22px 10px; color:var(--ink-soft); font-size:12.5px;}
+
+/* Scanner modal */
+.scan-frame{
+  position:relative; width:100%; aspect-ratio:4/3; background:#000;
+  border-radius:12px; overflow:hidden; margin-bottom:12px;
+}
+.scan-frame video{width:100%; height:100%; object-fit:cover;}
+.scan-reticle{
+  position:absolute; left:10%; right:10%; top:32%; bottom:32%;
+  border:2px solid #4CE0C4; border-radius:8px;
+  box-shadow:0 0 0 999px rgba(0,0,0,.35);
+}
+.scan-status{
+  font-size:12.5px; text-align:center; color:var(--ink-soft); margin-bottom:10px; min-height:16px;
+}
+.scan-lastmatch{
+  background:var(--teal-bg); color:#0B5E52; border-radius:8px; padding:10px 12px; font-size:13px; margin-bottom:10px;
+  display:none;
+}
+.scan-lastmatch.show{display:block;}
+
+/* Catalog modal */
+.cat-search{margin-bottom:12px;}
+.cat-item{
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+  border-bottom:1px solid var(--line); padding:10px 2px;
+}
+.cat-item > div:first-child{flex:1 1 auto; min-width:0;}
+.cat-item .cat-name{font-size:12.5px; font-weight:500; overflow-wrap:break-word;}
+.cat-item svg{flex:0 0 auto; max-width:100%;}
+.cat-item .btn-small{flex:0 0 auto; padding:8px 10px; white-space:nowrap;}
+
+/* Ficha de material — tarjeta técnica estilo hoja de especificación */
+.ficha-card{
+  background:var(--card); border-radius:14px; box-shadow:var(--shadow);
+  overflow:hidden; margin-top:4px; border:1px solid rgba(7,59,76,.05);
+}
+.ficha-head{
+  background:linear-gradient(135deg,var(--navy),var(--steel-2));
+  color:#fff; padding:16px 16px 14px; position:relative; overflow:hidden;
+}
+.ficha-head::after{
+  content:""; position:absolute; right:-30px; top:-30px; width:120px; height:120px;
+  border:2px solid rgba(255,255,255,.08); border-radius:50%;
+}
+.ficha-eyebrow{
+  font-family:'JetBrains Mono'; font-size:10px; letter-spacing:.1em; text-transform:uppercase;
+  color:#9FD8DC; margin-bottom:4px; display:flex; justify-content:space-between; align-items:center; gap:8px;
+}
+.ficha-title{font-family:'Oswald'; font-size:20px; font-weight:600; letter-spacing:.02em; line-height:1.15;}
+.ficha-subtitle{font-family:'Oswald'; font-size:13px; color:#CDEAEA; margin-top:2px; text-transform:uppercase; letter-spacing:.03em;}
+.ficha-code-pill{
+  font-family:'JetBrains Mono'; font-size:10.5px; background:rgba(255,255,255,.14);
+  border:1px solid rgba(255,255,255,.25); padding:4px 8px; border-radius:6px; white-space:nowrap;
+}
+.ficha-medida-row{display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line);}
+.ficha-medida-cell{background:var(--card); padding:12px 10px; text-align:center;}
+.ficha-medida-cell .v{font-family:'Oswald'; font-size:19px; font-weight:600; color:var(--navy); line-height:1.1;}
+.ficha-medida-cell .l{font-size:9.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.04em; margin-top:4px;}
+.ficha-stock-title{
+  font-family:'Oswald'; font-size:11.5px; letter-spacing:.05em; text-transform:uppercase;
+  color:var(--ink-soft); padding:14px 14px 6px;
+}
+.ficha-stock-row{display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--line); margin:0 0 2px;}
+.ficha-stock-cell{background:var(--card); padding:12px 6px; text-align:center;}
+.ficha-stock-cell .v{font-family:'Oswald'; font-size:20px; font-weight:700; color:var(--navy); line-height:1.1;}
+.ficha-stock-cell .l{font-size:8.6px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.03em; margin-top:4px; line-height:1.25;}
+.ficha-stock-cell.warn .v{color:var(--red);}
+.ficha-footer{
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+  padding:10px 14px 14px; font-size:10.5px; color:var(--ink-soft);
+}
+.ficha-footer .ts{font-family:'JetBrains Mono';}
+.ficha-note{
+  background:var(--paper); margin:0 14px 14px; padding:9px 11px; border-radius:8px;
+  font-size:11px; color:var(--ink-soft); line-height:1.4;
+}
+
+/* Ubicación — grupos por destino */
+.ubic-group{margin-bottom:18px;}
+.ubic-group-head{
+  display:flex; align-items:center; justify-content:space-between;
+  background:var(--navy); color:#fff; padding:10px 14px; border-radius:10px 10px 0 0;
+}
+.ubic-group-head .name{font-family:'Oswald'; font-size:15px; font-weight:600; letter-spacing:.02em;}
+.ubic-group-head .count{font-family:'JetBrains Mono'; font-size:11px; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.25); padding:3px 9px; border-radius:999px;}
+.ubic-item{
+  background:var(--card); border:1px solid var(--line); border-top:none;
+  padding:11px 14px; display:flex; justify-content:space-between; align-items:center; gap:10px;
+}
+.ubic-item:last-child{border-radius:0 0 10px 10px;}
+.ubic-item .mat{font-size:12.5px; font-weight:600; color:var(--ink);}
+.ubic-item .meta{font-size:11px; color:var(--ink-soft); margin-top:2px;}
+.ubic-item .qty{
+  font-family:'Oswald'; font-size:18px; font-weight:700; color:var(--navy);
+  background:var(--paper); border-radius:8px; padding:4px 12px; text-align:center; min-width:2.4em;
+}
+
+.modal-overlay{
+  position:fixed; inset:0; background:rgba(11,20,35,.55);
+  display:none; align-items:flex-end; justify-content:center; z-index:80;
+}
+.modal-overlay.show{display:flex;}
+.modal-sheet{
+  background:#fff; width:100%; max-width:760px; border-radius:16px 16px 0 0;
+  padding:18px 16px 22px; max-height:88vh; overflow-y:auto;
+}
+.modal-sheet h3{font-size:15px; color:var(--navy); margin-bottom:12px;}
+.modal-close{
+  display:block; margin:0 auto 10px; width:38px; height:4px; background:var(--line); border-radius:99px; border:none;
+}
+
+@media(min-width:640px){
+  .grid2-desktop{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-row">
+    <div class="brand">
+      <span class="eyebrow">COSCO SHIPPING Ports Chancay · TR</span>
+      <h1>Control de Aparejos</h1>
+    </div>
+    <span class="shift-pill mono" id="clockPill">--:--</span>
+  </div>
+  <div class="stat-strip">
+    <div class="stat-chip"><div class="n" id="statTotal">0</div><div class="l">Registros</div></div>
+    <div class="stat-chip"><div class="n" id="statPend">0</div><div class="l">Pendientes</div></div>
+    <div class="stat-chip"><div class="n" id="statRevisar">0</div><div class="l">Revisar</div></div>
+    <div class="stat-chip"><div class="n" id="statReparar">0</div><div class="l">Por Reparar</div></div>
+  </div>
+</header>
+
+<div id="storageBanner" style="display:none;"></div>
+
+<main>
+
+  <!-- ================= VIEW: SALIDA ================= -->
+  <section class="view active" id="view-salida">
+    <div class="section-title">
+      <h2>Nueva Salida</h2>
+      <span class="sub">Retiro de material</span>
+    </div>
+    <div class="card">
+      <form id="formSalida">
+        <div class="grid2">
+          <div class="field">
+            <label>Fecha de Salida</label>
+            <input type="date" id="s_fecha" required>
+          </div>
+          <div class="field">
+            <label>Turno</label>
+            <div class="toggle-row" id="s_turno_group">
+              <button type="button" class="toggle-btn" data-val="DIA">Día</button>
+              <button type="button" class="toggle-btn" data-val="NOCHE">Noche</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div class="field">
+            <label>Barco</label>
+            <select id="s_barco" required></select>
+          </div>
+          <div class="field">
+            <label>Tipo de Barco</label>
+            <select id="s_tipo" required>
+              <option value="CONTEINERO">Conteinero</option>
+              <option value="CARGA GENERAL">Carga General</option>
+              <option value="MIXTO">Mixto</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>#Visita <span class="hint" style="text-transform:none;font-weight:400;">(sugerido según barco + fecha)</span></label>
+          <input type="number" id="s_visita" min="1" required class="mono">
+        </div>
+
+        <div class="field">
+          <label>¿Con Retorno?</label>
+          <div class="toggle-row" id="s_retorno_group">
+            <button type="button" class="toggle-btn" data-val="CON RETORNO">Con Retorno</button>
+            <button type="button" class="toggle-btn" data-val="SIN RETORNO">Sin Retorno</button>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div class="field">
+            <label>Destino / Ubicación</label>
+            <select id="s_destino" required></select>
+          </div>
+          <div class="field">
+            <label>Motivo Solicitud</label>
+            <select id="s_motivo" required>
+              <option value="IMPLEMENTACION">Implementación</option>
+              <option value="CAMBIO DE EQUIPAMIENTO">Cambio de Equipamiento</option>
+              <option value="REPOSICIÓN">Reposición</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div class="field">
+            <label>Responsable de Retiro</label>
+            <select id="s_resp" required></select>
+          </div>
+          <div class="field">
+            <label>Supervisor Responsable</label>
+            <select id="s_sup"></select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Observación</label>
+          <textarea id="s_obs" placeholder="Opcional"></textarea>
+        </div>
+      </form>
+    </div>
+
+    <div class="section-title">
+      <h2>Materiales</h2>
+      <span class="sub" id="cartCount">0 agregados</span>
+    </div>
+    <div class="card">
+      <div class="scan-row">
+        <button type="button" class="btn btn-primary" id="btnOpenScan">📷 Escanear código</button>
+        <button type="button" class="btn btn-ghost btn-small" id="btnOpenCatalog">📇 Catálogo</button>
+      </div>
+      <div class="field" style="margin-top:14px;">
+        <label>Código o nombre de material</label>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="mp_input" list="materialesList" placeholder="Escanea, escribe o pega el código..." autocomplete="off">
+          <button type="button" class="btn btn-primary btn-small" id="mp_addBtn" style="flex:0 0 auto;">Agregar</button>
+        </div>
+        <datalist id="materialesList"></datalist>
+        <p class="hint">Con un lector físico (pistola USB/Bluetooth), deja el cursor aquí: cada escaneo se agrega solo al presionar Enter.</p>
+      </div>
+      <div id="cartList"></div>
+    </div>
+
+    <button type="button" class="btn btn-primary" id="btnRegistrarSalida" style="margin-bottom:24px;">Registrar Salida</button>
+  </section>
+
+  <!-- ================= VIEW: DEVOLUCION ================= -->
+  <section class="view" id="view-devolucion">
+    <div class="section-title">
+      <h2>Devolución</h2>
+      <span class="sub">Cerrar salidas con retorno</span>
+    </div>
+    <div class="filters">
+      <select id="d_filtroBarco"><option value="">Todos los barcos</option></select>
+    </div>
+    <div id="devolucionList"></div>
+  </section>
+
+  <!-- ================= VIEW: REPARACION ================= -->
+  <section class="view" id="view-reparacion">
+    <div class="section-title">
+      <h2>Reparaciones</h2>
+      <span class="sub">Avance de materiales por reparar</span>
+    </div>
+    <div id="reparacionList"></div>
+  </section>
+
+  <!-- ================= VIEW: STOCK ================= -->
+  <section class="view" id="view-ficha">
+    <div class="section-title">
+      <h2>Stock</h2>
+      <span class="sub">Consulta en tiempo real</span>
+    </div>
+    <div class="card">
+      <div class="scan-row">
+        <button type="button" class="btn btn-primary" id="btnOpenScanFicha">📷 Escanear código</button>
+      </div>
+      <div class="field" style="margin-top:14px;">
+        <label>Código, nombre exacto o categoría (ej. "estrobo")</label>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="fi_input" list="materialesList" placeholder="Escanea, escribe un código o una categoría..." autocomplete="off">
+          <button type="button" class="btn btn-primary btn-small" id="fi_searchBtn" style="flex:0 0 auto;">Buscar</button>
+        </div>
+        <p class="hint">Un código o nombre exacto muestra la ficha completa de ese material. Una palabra (ej. "grillete") muestra el stock de todos los materiales que la contengan.</p>
+      </div>
+      <div class="chip-row" id="categoryChips"></div>
+    </div>
+    <div id="fichaResult"></div>
+  </section>
+
+  <!-- ================= VIEW: UBICACIÓN ================= -->
+  <section class="view" id="view-ubicacion">
+    <div class="section-title">
+      <h2>Ubicación</h2>
+      <span class="sub">Equipos aún no devueltos, por ubicación</span>
+    </div>
+    <div class="card" style="margin-bottom:14px;">
+      <label style="display:block;font-size:11.5px;font-weight:600;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;">Datos del turno (para el reporte)</label>
+      <div class="grid2">
+        <div class="field">
+          <label>Fecha</label>
+          <input type="date" id="ub_fecha">
+        </div>
+        <div class="field">
+          <label>Turno</label>
+          <div class="toggle-row" id="ub_turno_group">
+            <button type="button" class="toggle-btn" data-val="DIA">Día</button>
+            <button type="button" class="toggle-btn" data-val="NOCHE">Noche</button>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Coordinador de Equipos de Turno</label>
+        <select id="ub_coordinador"><option value="">— Seleccionar —</option></select>
+      </div>
+      <div class="field" style="margin-bottom:0;">
+        <label>Ubicación a reportar</label>
+        <select id="ub_filtroUbicacion"><option value="">Todas las ubicaciones</option></select>
+      </div>
+      <p class="hint" style="margin-top:10px; margin-bottom:10px;">Cada turno puede emitir su propio reporte: si un material lleva varios turnos sin devolverse, seguirá apareciendo hasta que se registre su devolución — cada coordinador imprime su constancia con su fecha, turno y firma.</p>
+      <button class="btn btn-ghost" id="btnExportUbicacionPdf">⬇ Descargar PDF</button>
+    </div>
+    <div id="ubicacionList"></div>
+  </section>
+
+  <!-- ================= VIEW: REGISTROS ================= -->
+  <section class="view" id="view-registros">
+    <div class="section-title">
+      <h2>Registros</h2>
+      <span class="sub">Historial completo</span>
+    </div>
+    <div class="filters">
+      <select id="r_filtroBarco"><option value="">Todos los barcos</option></select>
+      <select id="r_filtroEstado">
+        <option value="">Todos los estados</option>
+        <option value="OK">✓ OK</option>
+        <option value="PENDIENTE">⏳ Pendiente</option>
+        <option value="REVISAR">⚠ Revisar</option>
+        <option value="SIN RETORNO">⬛ Sin Retorno</option>
+      </select>
+    </div>
+    <div class="card" style="margin-bottom:14px;">
+      <div class="field" style="margin-bottom:10px;">
+        <label>Exportar</label>
+        <p class="hint" style="margin-bottom:10px;">Descarga un Excel listo para copiar y pegar en tu archivo maestro (columnas A:T y X:Z de SALIDA Y DEVOLUCIÓN, más una hoja de referencia para POR REPARAR).</p>
+      </div>
+      <button class="btn btn-ghost" id="btnExport">⬇ Descargar Excel</button>
+    </div>
+    <div id="registrosList"></div>
+  </section>
+
+</main>
+
+<nav class="tabbar">
+  <button data-view="salida" class="active"><span class="ic">📤</span><span class="lb">Salida</span></button>
+  <button data-view="devolucion"><span class="ic">📥</span><span class="lb">Devolución</span><span class="badge" id="navBadgeDev" style="display:none;"></span></button>
+  <button data-view="reparacion"><span class="ic">🔧</span><span class="lb">Reparación</span><span class="badge" id="navBadgeRep" style="display:none;"></span></button>
+  <button data-view="ficha"><span class="ic">🔍</span><span class="lb">Stock</span></button>
+  <button data-view="ubicacion"><span class="ic">📍</span><span class="lb">Ubicación</span></button>
+  <button data-view="registros"><span class="ic">📋</span><span class="lb">Registros</span></button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<!-- Devolution modal -->
+<div class="modal-overlay" id="devModal">
+  <div class="modal-sheet">
+    <button class="modal-close" onclick="closeDevModal()"></button>
+    <h3>Registrar Devolución</h3>
+    <div id="devModalBody"></div>
+  </div>
+</div>
+
+<!-- Scan modal -->
+<div class="modal-overlay" id="scanModal">
+  <div class="modal-sheet">
+    <button class="modal-close" onclick="closeScanModal()"></button>
+    <h3 id="scanModalTitle">Escanear Material</h3>
+    <div class="scan-frame" id="scanFrame">
+      <video id="scanVideo" playsinline autoplay muted></video>
+      <div class="scan-reticle"></div>
+    </div>
+    <div class="scan-status" id="scanStatus">Apunta la cámara al código de barras</div>
+    <div class="scan-lastmatch" id="scanLastMatch"></div>
+    <div class="field">
+      <label>O escribe / pega el código</label>
+      <div style="display:flex; gap:8px;">
+        <input type="text" id="scan_manual" placeholder="TR000001..." autocomplete="off">
+        <button type="button" class="btn btn-primary btn-small" id="scan_manualBtn" style="flex:0 0 auto;">Buscar</button>
+      </div>
+    </div>
+    <button type="button" class="btn btn-ghost" onclick="closeScanModal()">Cerrar</button>
+  </div>
+</div>
+
+<!-- Catalog modal -->
+<div class="modal-overlay" id="catalogModal">
+  <div class="modal-sheet">
+    <button class="modal-close" onclick="closeCatalogModal()"></button>
+    <h3>Catálogo de Códigos</h3>
+    <input type="text" class="cat-search" id="cat_search" placeholder="Buscar material..." style="width:100%;border:1.5px solid var(--line);border-radius:8px;padding:10px 12px;font-size:14px;">
+    <div id="catalogList" style="max-height:56vh; overflow-y:auto;"></div>
+  </div>
+</div>
+
+<!-- Repair modal -->
+<div class="modal-overlay" id="repModal">
+  <div class="modal-sheet">
+    <button class="modal-close" onclick="closeRepModal()"></button>
+    <h3>Avance de Reparación</h3>
+    <div id="repModalBody"></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   CONTROL TR — Captura de Aparejos (COSCO SHIPPING Ports Chancay)
+   ============================================================ */
+
+const MATERIAL_ITEMS = [{"code": "TR000001", "name": "ESTROBO DE ACERO NEGRO-OJO - OJO-3/8\"-5M-1.4 TON", "categoria": "ESTROBO", "tipo": "OJO - OJO", "dimension": "3/8\"", "longitud": "5M", "wll": "1.4 TON", "stockInicial": 10}, {"code": "TR000002", "name": "ESTROBO DE ACERO NEGRO-OJO - OJO-3/8\"-10M-1.4TON", "categoria": "ESTROBO", "tipo": "OJO - OJO", "dimension": "3/8\"", "longitud": "10M", "wll": "1.4TON", "stockInicial": 2}, {"code": "TR000003", "name": "ESTROBO DE ACERO NEGRO-OJO - OJO-1/2\"-7M-2.5 TON", "categoria": "ESTROBO", "tipo": "OJO - OJO", "dimension": "1/2\"", "longitud": "7M", "wll": "2.5 TON", "stockInicial": 10}, {"code": "TR000004", "name": "ESTROBO DE ACERO NEGRO-OJO - OJO-5/8\"-4M-3.9 TON", "categoria": "ESTROBO", "tipo": "OJO - OJO", "dimension": "5/8\"", "longitud": "4M", "wll": "3.9 TON", "stockInicial": 130}, {"code": "TR000005", "name": "ESTROBO DE ACERO NEGRO-OJO - OJO-5/8\"-7M-3.9 TON", "categoria": "ESTROBO", "tipo": "OJO - OJO", "dimension": "5/8\"", "longitud": "7M", "wll": "3.9 TON", "stockInicial": 14}, {"code": "TR000006", "name": "ESTROBO DE ACERO NEGRO-OJO - OJO-5/8\"-10M-3.9 TON", "categoria": "ESTROBO", "tipo": "OJO - OJO", "dimension": "5/8\"", "longitud": "10M", "wll": "3.9 TON", "stockInicial": 20}, {"code": "TR000007", "name": "ESTROBO DE ACERO NEGRO-OJO - OJO-3/4\"-4M-5.6 TON", "categoria": "ESTROBO", "tipo": "OJO - OJO", "dimension": "3/4\"", "longitud": "4M", "wll": "5.6 TON", "stockInicial": 18}, {"code": "TR000008", "name": "ESTROBO DE ACERO NEGRO-OJO - OJO-3/4\"-7M-5.6 TON", "categoria": "ESTROBO", "tipo": "OJO - OJO", "dimension": "3/4\"", "longitud": "7M", "wll": "5.6 TON", "stockInicial": 50}, {"code": "TR000009", "name": "ESTROBO DE ACERO NEGRO-OJO - OJO-3/4\"-10M-5.6 TON", "categoria": "ESTROBO", "tipo": "OJO - OJO", "dimension": "3/4\"", "longitud": "10M", "wll": "5.6 TON", "stockInicial": 10}, {"code": "TR000010", "name": "ESTROBO DE ACERO NEGRO-OJO - OJO-1\"-1M-9.8 TON", "categoria": "ESTROBO", "tipo": "OJO - OJO", "dimension": "1\"", "longitud": "1M", "wll": "9.8 TON", "stockInicial": 4}, {"code": "TR000011", "name": "ESTROBO DE ACERO NEGRO-OJO - OJO-1\"-2M-9.8 TON", "categoria": "ESTROBO", "tipo": "OJO - OJO", "dimension": "1\"", "longitud": "2M", "wll": "9.8 TON", "stockInicial": 4}, {"code": "TR000012", "name": "ESTROBO DE ACERO NEGRO-OJO - OJO-1\"-3M-9.8 TON", "categoria": "ESTROBO", "tipo": "OJO - OJO", "dimension": "1\"", "longitud": "3M", "wll": "9.8 TON", "stockInicial": 52}, {"code": "TR000013", "name": "ESTROBO DE ACERO NEGRO-OJO - OJO-1\"-7M-9.8 TON", "categoria": "ESTROBO", "tipo": "OJO - OJO", "dimension": "1\"", "longitud": "7M", "wll": "9.8 TON", "stockInicial": 73}, {"code": "TR000014", "name": "ESTROBO DE ACERO NEGRO-OJO - OJO-1\"-10M-9.8 TON", "categoria": "ESTROBO", "tipo": "OJO - OJO", "dimension": "1\"", "longitud": "10M", "wll": "9.8 TON", "stockInicial": 10}, {"code": "TR000015", "name": "ESTROBO DE ACERO NEGRO-OJO - OJO-1 1/8\"-6M-12 TON", "categoria": "ESTROBO", "tipo": "OJO - OJO", "dimension": "1 1/8\"", "longitud": "6M", "wll": "12 TON", "stockInicial": 14}, {"code": "TR000016", "name": "ESTROBO DE ACERO NEGRO-OJO - OJO-1 1/8\"-10M-12 TON", "categoria": "ESTROBO", "tipo": "OJO - OJO", "dimension": "1 1/8\"", "longitud": "10M", "wll": "12 TON", "stockInicial": 10}, {"code": "TR000017", "name": "ESTROBO DE ACERO NEGRO-OJO - OJO-1 1/4\"-3M-15 TON", "categoria": "ESTROBO", "tipo": "OJO - OJO", "dimension": "1 1/4\"", "longitud": "3M", "wll": "15 TON", "stockInicial": 20}, {"code": "TR000018", "name": "ESTROBO DE ACERO NEGRO-OJO - OJO-1 1/4\"-6M-15 TON", "categoria": "ESTROBO", "tipo": "OJO - OJO", "dimension": "1 1/4\"", "longitud": "6M", "wll": "15 TON", "stockInicial": 18}, {"code": "TR000019", "name": "ESTROBO DE ACERO NEGRO-OJO - OJO-1 1/4\"-9M-15 TON", "categoria": "ESTROBO", "tipo": "OJO - OJO", "dimension": "1 1/4\"", "longitud": "9M", "wll": "15 TON", "stockInicial": 5}, {"code": "TR000020", "name": "ESTROBO DE ACERO NEGRO-OJO - OJO-1 1/4\"-10M-14", "categoria": "ESTROBO", "tipo": "OJO - OJO", "dimension": "1 1/4\"", "longitud": "10M", "wll": 14, "stockInicial": 12}, {"code": "TR000021", "name": "ESTROBO DE ACERO NEGRO-OJO - OJO-1 1/4\"-12M-15 TON", "categoria": "ESTROBO", "tipo": "OJO - OJO", "dimension": "1 1/4\"", "longitud": "12M", "wll": "15 TON", "stockInicial": 4}, {"code": "TR000022", "name": "ESTROBO DE ACERO NEGRO-OJO - OJO-1 1/4\"-18M-15 TON", "categoria": "ESTROBO", "tipo": "OJO - OJO", "dimension": "1 1/4\"", "longitud": "18M", "wll": "15 TON", "stockInicial": 4}, {"code": "TR000023", "name": "ESTROBO DE ACERO NEGRO-OJO - OJO-1 1/2\"-2M-21 TON", "categoria": "ESTROBO", "tipo": "OJO - OJO", "dimension": "1 1/2\"", "longitud": "2M", "wll": "21 TON", "stockInicial": 4}, {"code": "TR000024", "name": "ESTROBO DE ACERO NEGRO-OJO - OJO-1 1/2\"-3M-21 TON", "categoria": "ESTROBO", "tipo": "OJO - OJO", "dimension": "1 1/2\"", "longitud": "3M", "wll": "21 TON", "stockInicial": 10}, {"code": "TR000025", "name": "ESTROBO DE ACERO NEGRO-OJO - OJO-1 1/2\"-6M-21 TON", "categoria": "ESTROBO", "tipo": "OJO - OJO", "dimension": "1 1/2\"", "longitud": "6M", "wll": "21 TON", "stockInicial": 16}, {"code": "TR000026", "name": "ESTROBO DE ACERO NEGRO-OJO - OJO-1 1/2\"-9M-21 TON", "categoria": "ESTROBO", "tipo": "OJO - OJO", "dimension": "1 1/2\"", "longitud": "9M", "wll": "21 TON", "stockInicial": 4}, {"code": "TR000027", "name": "ESTROBO DE ACERO NEGRO-OJO - OJO-1 1/2\"-10M-21 TON", "categoria": "ESTROBO", "tipo": "OJO - OJO", "dimension": "1 1/2\"", "longitud": "10M", "wll": "21 TON", "stockInicial": 8}, {"code": "TR000028", "name": "ESLINGA TUBULAR-SIN FIN--1M-2 TON", "categoria": "ESLINGA", "tipo": "SIN FIN", "dimension": "", "longitud": "1M", "wll": "2 TON", "stockInicial": 0}, {"code": "TR000029", "name": "ESLINGA TUBULAR-OJO - OJO--1.5M-2 TON", "categoria": "ESLINGA", "tipo": "OJO - OJO", "dimension": "", "longitud": "1.5M", "wll": "2 TON", "stockInicial": 23}, {"code": "TR000030", "name": "ESLINGA TUBULAR-SIN FIN--2M-2 TON", "categoria": "ESLINGA", "tipo": "SIN FIN", "dimension": "", "longitud": "2M", "wll": "2 TON", "stockInicial": 15}, {"code": "TR000031", "name": "ESLINGA PLANA -OJO - OJO--2M-2.5 TON", "categoria": "ESLINGA", "tipo": "OJO - OJO", "dimension": "", "longitud": "2M", "wll": "2.5 TON", "stockInicial": 0}, {"code": "TR000032", "name": "ESLINGA PLANA- OJO - OJO--2M-2.8 TON", "categoria": "ESLINGA", "tipo": " OJO - OJO", "dimension": "", "longitud": "2M", "wll": "2.8 TON", "stockInicial": 142}, {"code": "TR000033", "name": "ESLINGA PLANA -SIN FIN--3M-2.5 TON", "categoria": "ESLINGA", "tipo": "SIN FIN", "dimension": "", "longitud": "3M", "wll": "2.5 TON", "stockInicial": 0}, {"code": "TR000034", "name": "ESLINGA PLANA -SIN FIN--3M-2.8 TON", "categoria": "ESLINGA", "tipo": "SIN FIN", "dimension": "", "longitud": "3M", "wll": "2.8 TON", "stockInicial": 0}, {"code": "TR000035", "name": "ESLINGA TUBULAR-SIN FIN--4M-5 TON", "categoria": "ESLINGA", "tipo": "SIN FIN", "dimension": "", "longitud": "4M", "wll": "5 TON", "stockInicial": 8}, {"code": "TR000036", "name": "ESLINGA TUBULAR-SIN FIN--4M-6 TON", "categoria": "ESLINGA", "tipo": "SIN FIN", "dimension": "", "longitud": "4M", "wll": "6 TON", "stockInicial": 0}, {"code": "TR000037", "name": "ESLINGA PLANA-OJO - OJO--4M-10 TON", "categoria": "ESLINGA", "tipo": "OJO - OJO", "dimension": "", "longitud": "4M", "wll": "10 TON", "stockInicial": 14}, {"code": "TR000038", "name": "ESLINGA PLANA-OJO - OJO--4M-12 TON", "categoria": "ESLINGA", "tipo": "OJO - OJO", "dimension": "", "longitud": "4M", "wll": "12 TON", "stockInicial": 19}, {"code": "TR000039", "name": "GRILLETE -CADENA-1 1/2\"--17 TON", "categoria": "GRILLETE", "tipo": "CADENA", "dimension": "1 1/2\"", "longitud": "", "wll": "17 TON", "stockInicial": 8}, {"code": "TR000040", "name": "GRILLETE -PASADOR-1 1/2\"--17 TON", "categoria": "GRILLETE", "tipo": "PASADOR", "dimension": "1 1/2\"", "longitud": "", "wll": "17 TON", "stockInicial": 23}, {"code": "TR000041", "name": "GRILLETE -CON TUERCA-1 1/2\"--17 TON", "categoria": "GRILLETE", "tipo": "CON TUERCA", "dimension": "1 1/2\"", "longitud": "", "wll": "17 TON", "stockInicial": 15}, {"code": "TR000042", "name": "GRILLETE -PASADOR-2\"--35 TON", "categoria": "GRILLETE", "tipo": "PASADOR", "dimension": "2\"", "longitud": "", "wll": "35 TON", "stockInicial": 37}, {"code": "TR000043", "name": "GRILLETE -CADENA-2\"--35 TON", "categoria": "GRILLETE", "tipo": "CADENA", "dimension": "2\"", "longitud": "", "wll": "35 TON", "stockInicial": 2}, {"code": "TR000044", "name": "GRILLETE -CON TUERCA-2\"--35 TON", "categoria": "GRILLETE", "tipo": "CON TUERCA", "dimension": "2\"", "longitud": "", "wll": "35 TON", "stockInicial": 10}, {"code": "TR000045", "name": "GRILLETE -PASADOR-1/2\"--2 TON", "categoria": "GRILLETE", "tipo": "PASADOR", "dimension": "1/2\"", "longitud": "", "wll": "2 TON", "stockInicial": 140}, {"code": "TR000046", "name": "GRILLETE -PASADOR-5/8\"--3.25 TON", "categoria": "GRILLETE", "tipo": "PASADOR", "dimension": "5/8\"", "longitud": "", "wll": "3.25 TON", "stockInicial": 118}, {"code": "TR000047", "name": "GRILLETE -PASADOR-7/8\"--6.5 TON", "categoria": "GRILLETE", "tipo": "PASADOR", "dimension": "7/8\"", "longitud": "", "wll": "6.5 TON", "stockInicial": 37}, {"code": "TR000048", "name": "GRILLETE -PASADOR-1\"--8.5 TON", "categoria": "GRILLETE", "tipo": "PASADOR", "dimension": "1\"", "longitud": "", "wll": "8.5 TON", "stockInicial": 43}, {"code": "TR000049", "name": "GRILLETE-PASADOR-1 1/4\"--12 TON", "categoria": "GRILLETE", "tipo": "PASADOR", "dimension": "1 1/4\"", "longitud": "", "wll": "12 TON", "stockInicial": 52}, {"code": "TR000050", "name": "GRILLETE -PASADOR-3/4\"--4.75 TON", "categoria": "GRILLETE", "tipo": "PASADOR", "dimension": "3/4\"", "longitud": "", "wll": "4.75 TON", "stockInicial": 198}, {"code": "TR000051", "name": "GRILLETE -CADENA-1 3/4\"--25 TON", "categoria": "GRILLETE", "tipo": "CADENA", "dimension": "1 3/4\"", "longitud": "", "wll": "25 TON", "stockInicial": 4}, {"code": "TR000052", "name": "GRILLETE -CON TUERCA-1 3/4\"--25 TON", "categoria": "GRILLETE", "tipo": "CON TUERCA", "dimension": "1 3/4\"", "longitud": "", "wll": "25 TON", "stockInicial": 9}, {"code": "TR000053", "name": "GRILLETE -PASADOR-1 3/4\"--", "categoria": "GRILLETE", "tipo": "PASADOR", "dimension": "1 3/4\"", "longitud": "", "wll": "", "stockInicial": 8}, {"code": "TR000054", "name": "GRILLETE -PASADOR-1 3/8\"--13.5 TON", "categoria": "GRILLETE", "tipo": "PASADOR", "dimension": "1 3/8\"", "longitud": "", "wll": "13.5 TON", "stockInicial": 1}, {"code": "TR000055", "name": "GRILLETE -PASADOR-1/2\"--1.82 TON", "categoria": "GRILLETE", "tipo": "PASADOR", "dimension": "1/2\"", "longitud": "", "wll": "1.82 TON", "stockInicial": 125}, {"code": "TR000056", "name": "GANCHO AZUL----15 TON", "categoria": "GANCHO", "tipo": "", "dimension": "", "longitud": "", "wll": "15 TON", "stockInicial": 10}, {"code": "TR000057", "name": "GANCHO ROJO-OJO---5 TON", "categoria": "GANCHO", "tipo": "OJO", "dimension": "", "longitud": "", "wll": "5 TON", "stockInicial": 24}, {"code": "TR000058", "name": "GANCHO ROJO-OJO---3 TON", "categoria": "GANCHO", "tipo": "OJO", "dimension": "", "longitud": "", "wll": "3 TON", "stockInicial": 33}, {"code": "TR000059", "name": "GANCHO VERDE-OJO-3/8\"-10MM-3.2 TON", "categoria": "GANCHO", "tipo": "OJO", "dimension": "3/8\"", "longitud": "10MM", "wll": "3.2 TON", "stockInicial": 70}, {"code": "TR000060", "name": "GANCHO VERDE-OJO-1/2\"-13MM-5.4 TON", "categoria": "GANCHO", "tipo": "OJO", "dimension": "1/2\"", "longitud": "13MM", "wll": "5.4 TON", "stockInicial": 79}, {"code": "TR000061", "name": "GANCHO VERDE-OJO-5/8\"-16MM-8.2 TON", "categoria": "GANCHO", "tipo": "OJO", "dimension": "5/8\"", "longitud": "16MM", "wll": "8.2 TON", "stockInicial": 59}, {"code": "TR000062", "name": "GANCHO ROJO-OJO---10 TON", "categoria": "GANCHO", "tipo": "OJO", "dimension": "", "longitud": "", "wll": "10 TON", "stockInicial": 15}, {"code": "TR000063", "name": "GANCHO DE SEGURIDAD --1/2\"--6.8 TON", "categoria": "GANCHO", "tipo": "", "dimension": "1/2\"", "longitud": "", "wll": "6.8 TON", "stockInicial": 4}, {"code": "TR000064", "name": "ESLINGA PLANA-SIN FIN--5M-3 TON", "categoria": "ESLINGA", "tipo": "SIN FIN", "dimension": "", "longitud": "5M", "wll": "3 TON", "stockInicial": 2}, {"code": "TR000065", "name": "ESLINGA PLANA -SIN FIN--5M-5 TON", "categoria": "ESLINGA", "tipo": "SIN FIN", "dimension": "", "longitud": "5M", "wll": "5 TON", "stockInicial": 19}, {"code": "TR000066", "name": "ESLINGA PLANA -SIN FIN--5M-5.6", "categoria": "ESLINGA", "tipo": "SIN FIN", "dimension": "", "longitud": "5M", "wll": 5.6, "stockInicial": 20}, {"code": "TR000067", "name": "ESLINGA TUBULAR-SIN FIN--5M-20 TON", "categoria": "ESLINGA", "tipo": "SIN FIN", "dimension": "", "longitud": "5M", "wll": "20 TON", "stockInicial": 5}, {"code": "TR000068", "name": "ESLINGA TUBULAR -SIN FIN--5M-25 TON", "categoria": "ESLINGA", "tipo": "SIN FIN", "dimension": "", "longitud": "5M", "wll": "25 TON", "stockInicial": 12}, {"code": "TR000069", "name": "ESLINGA PLANA-OJO - OJO--6M-3 TON", "categoria": "ESLINGA", "tipo": "OJO - OJO", "dimension": "", "longitud": "6M", "wll": "3 TON", "stockInicial": 2}, {"code": "TR000070", "name": "ESLINGA PLANA-OJO - OJO--6M-4.3 TON", "categoria": "ESLINGA", "tipo": "OJO - OJO", "dimension": "", "longitud": "6M", "wll": "4.3 TON", "stockInicial": 12}, {"code": "TR000071", "name": "ESLINGA TUBULAR -OJO - OJO--6M-5 TON", "categoria": "ESLINGA", "tipo": "OJO - OJO", "dimension": "", "longitud": "6M", "wll": "5 TON", "stockInicial": 0}, {"code": "TR000072", "name": "ESLINGA PLANA-OJO - OJO--6M-5 TON", "categoria": "ESLINGA", "tipo": "OJO - OJO", "dimension": "", "longitud": "6M", "wll": "5 TON", "stockInicial": 17}, {"code": "TR000073", "name": "ESLINGA TUBULAR -SIN FIN--6M-6 TON", "categoria": "ESLINGA", "tipo": "SIN FIN", "dimension": "", "longitud": "6M", "wll": "6 TON", "stockInicial": 14}, {"code": "TR000074", "name": "ESLINGA MALLA DE CADENA -ANILLO EN EXTREMOS--6M-8 TON", "categoria": "ESLINGA", "tipo": "ANILLO EN EXTREMOS", "dimension": "", "longitud": "6M", "wll": "8 TON", "stockInicial": 6}, {"code": "TR000075", "name": "ESLINGA PLANA-OJO - OJO--6M-12 TON", "categoria": "ESLINGA", "tipo": "OJO - OJO", "dimension": "", "longitud": "6M", "wll": "12 TON", "stockInicial": 15}, {"code": "TR000076", "name": "ESLINGA TUBULAR -SIN FIN--6M-20 TON", "categoria": "ESLINGA", "tipo": "SIN FIN", "dimension": "", "longitud": "6M", "wll": "20 TON", "stockInicial": 12}, {"code": "TR000077", "name": "PROTECTOR DE FAJA -PLANA-3\"-1M-", "categoria": "OTROS", "tipo": "PLANA", "dimension": "3\"", "longitud": "1M", "wll": "", "stockInicial": 0}, {"code": "TR000078", "name": "ESLINGA TUBULAR -OJO - OJO--6M-20 TON", "categoria": "ESLINGA", "tipo": "OJO - OJO", "dimension": "", "longitud": "6M", "wll": "20 TON", "stockInicial": 10}, {"code": "TR000079", "name": "ESLINGA PLANA -SIN FIN--10M-5 TON", "categoria": "ESLINGA", "tipo": "SIN FIN", "dimension": "", "longitud": "10M", "wll": "5 TON", "stockInicial": 19}, {"code": "TR000080", "name": "ESLINGA PLANA-OJO - OJO--10M-10 TON", "categoria": "ESLINGA", "tipo": "OJO - OJO", "dimension": "", "longitud": "10M", "wll": "10 TON", "stockInicial": 4}, {"code": "TR000081", "name": "ESLINGA PLANA-OJO - OJO--10M-15 TON", "categoria": "ESLINGA", "tipo": "OJO - OJO", "dimension": "", "longitud": "10M", "wll": "15 TON", "stockInicial": 0}, {"code": "TR000082", "name": "ESLINGA PLANA-OJO - OJO--12M-5 TON", "categoria": "ESLINGA", "tipo": "OJO - OJO", "dimension": "", "longitud": "12M", "wll": "5 TON", "stockInicial": 3}, {"code": "TR000083", "name": "ESLINGA PLANA- OJO - OJO--12M-7.2 TON", "categoria": "ESLINGA", "tipo": " OJO - OJO", "dimension": "", "longitud": "12M", "wll": "7.2 TON", "stockInicial": 6}, {"code": "TR000084", "name": "ESLINGA PLANA-OJO - OJO--15M-10 TON", "categoria": "ESLINGA", "tipo": "OJO - OJO", "dimension": "", "longitud": "15M", "wll": "10 TON", "stockInicial": 3}, {"code": "TR000085", "name": "ESLINGA PLANA-OJO - OJO--15M-20 TON", "categoria": "ESLINGA", "tipo": "OJO - OJO", "dimension": "", "longitud": "15M", "wll": "20 TON", "stockInicial": 8}, {"code": "TR000086", "name": "ESLINGA PLANA-OJO - OJO--15M-33.6 TON", "categoria": "ESLINGA", "tipo": "OJO - OJO", "dimension": "", "longitud": "15M", "wll": "33.6 TON", "stockInicial": 8}, {"code": "TR000087", "name": "NET PARA VEHICULOS---11.5M-10 TON", "categoria": "NET", "tipo": "", "dimension": "", "longitud": "11.5M", "wll": "10 TON", "stockInicial": 0}, {"code": "TR000088", "name": "NET PARA VEHICULOS---3.3M-20 TON", "categoria": "NET", "tipo": "", "dimension": "", "longitud": "3.3M", "wll": "20 TON", "stockInicial": 6}, {"code": "TR000089", "name": "NET PARA VEHICULOS---3.3M-30 TON", "categoria": "NET", "tipo": "", "dimension": "", "longitud": "3.3M", "wll": "30 TON", "stockInicial": 8}, {"code": "TR000090", "name": "NET PARA VEHICULOS---3.3M-40 TON", "categoria": "NET", "tipo": "", "dimension": "", "longitud": "3.3M", "wll": "40 TON", "stockInicial": 5}, {"code": "TR000091", "name": "ESLINGA PLANA -OJO - OJO--20M-20 TON", "categoria": "ESLINGA", "tipo": "OJO - OJO", "dimension": "", "longitud": "20M", "wll": "20 TON", "stockInicial": 6}, {"code": "TR000092", "name": "CADENA G80--1/2\"-4M-5.4 TON", "categoria": "CADENA", "tipo": "", "dimension": "1/2\"", "longitud": "4M", "wll": "5.4 TON", "stockInicial": 0}, {"code": "TR000093", "name": "CADENA G80--3/4\"-6M-12.8 TON", "categoria": "CADENA", "tipo": "", "dimension": "3/4\"", "longitud": "6M", "wll": "12.8 TON", "stockInicial": 0}, {"code": "TR000094", "name": "CADENA G80--7/8\"-4M-15.5 TON", "categoria": "CADENA", "tipo": "", "dimension": "7/8\"", "longitud": "4M", "wll": "15.5 TON", "stockInicial": 0}, {"code": "TR000095", "name": "CADENA G80--1\"-4M-21.6 TON", "categoria": "CADENA", "tipo": "", "dimension": "1\"", "longitud": "4M", "wll": "21.6 TON", "stockInicial": 0}, {"code": "TR000096", "name": "CADENA  DE UN RAMAL-ANILLO EN EXTREMOS-3/4\"-1.5M-12.8 TON", "categoria": "CADENA", "tipo": "ANILLO EN EXTREMOS", "dimension": "3/4\"", "longitud": "1.5M", "wll": "12.8 TON", "stockInicial": 5}, {"code": "TR000097", "name": "CADENA  DE UN RAMAL-ANILLO EN EXTREMOS-3/4\"-1.5M-16 TON", "categoria": "CADENA", "tipo": "ANILLO EN EXTREMOS", "dimension": "3/4\"", "longitud": "1.5M", "wll": "16 TON", "stockInicial": 6}, {"code": "TR000098", "name": "CADENA  DE UN RAMAL-ANILLO EN EXTREMOS-0.5-6M-5.4 TON", "categoria": "CADENA", "tipo": "ANILLO EN EXTREMOS", "dimension": 0.5, "longitud": "6M", "wll": "5.4 TON", "stockInicial": 0}, {"code": "TR000099", "name": "CADENA  DE UN RAMAL-GRILLETE EN EXTREMOS-3/4\"-6M-16 TON", "categoria": "CADENA", "tipo": "GRILLETE EN EXTREMOS", "dimension": "3/4\"", "longitud": "6M", "wll": "16 TON", "stockInicial": 6}, {"code": "TR000100", "name": "CADENA  DE UN RAMAL-GRILLETE EN EXTREMOS-3/4\"-6M-11.2 TON", "categoria": "CADENA", "tipo": "GRILLETE EN EXTREMOS", "dimension": "3/4\"", "longitud": "6M", "wll": "11.2 TON", "stockInicial": 4}, {"code": "TR000101", "name": "CADENA  DE UN RAMAL-ANILLO EN EXTREMOS-5/8\"-1.5M-8.2 TON", "categoria": "CADENA", "tipo": "ANILLO EN EXTREMOS", "dimension": "5/8\"", "longitud": "1.5M", "wll": "8.2 TON", "stockInicial": 4}, {"code": "TR000102", "name": "CADENA  DE 2 RAMALES -ANILLO EN EXTREMOS-5/8\"-1.5M-8.2 TON", "categoria": "CADENA", "tipo": "ANILLO EN EXTREMOS", "dimension": "5/8\"", "longitud": "1.5M", "wll": "8.2 TON", "stockInicial": 0}, {"code": "TR000103", "name": "CADENA  DE 4 RAMALES  -ANILLO EN EXTREMOS-5/16\"-1.5M-5.3 TON", "categoria": "CADENA", "tipo": "ANILLO EN EXTREMOS", "dimension": "5/16\"", "longitud": "1.5M", "wll": "5.3 TON", "stockInicial": 4}, {"code": "TR000104", "name": "CADENA  DE 2 RAMALES DE 3/8 DE DIÁMETRO-ANILLO EN EXTREMOS-3/8\"-1.5M-5.5 TON", "categoria": "CADENA", "tipo": "ANILLO EN EXTREMOS", "dimension": "3/8\"", "longitud": "1.5M", "wll": "5.5 TON", "stockInicial": 6}, {"code": "TR000105", "name": "GEAR BOX----0N/A", "categoria": "OTROS", "tipo": "", "dimension": "", "longitud": "", "wll": "0N/A", "stockInicial": 5}, {"code": "TR000106", "name": "CORTA ZUNCHO----", "categoria": "OTROS", "tipo": "", "dimension": "", "longitud": "", "wll": "", "stockInicial": 2}, {"code": "TR000107", "name": "LIFTING LUG TOP LIFT----12.5 TON", "categoria": "OTROS", "tipo": "", "dimension": "", "longitud": "", "wll": "12.5 TON", "stockInicial": 0}, {"code": "TR000108", "name": "LIFTING LUG SIDE LIFT ----12.5 TON", "categoria": "OTROS", "tipo": "", "dimension": "", "longitud": "", "wll": "12.5 TON", "stockInicial": 8}, {"code": "TR000109", "name": "LIFTING LUG TOP LIFT----15 TON", "categoria": "OTROS", "tipo": "", "dimension": "", "longitud": "", "wll": "15 TON", "stockInicial": 4}, {"code": "TR000110", "name": "MADERA SELECTA NACIONAL DE 6\" X 6\" X 5\"----", "categoria": "OTROS", "tipo": "", "dimension": "", "longitud": "", "wll": "", "stockInicial": 0}, {"code": "TR000111", "name": "MANTA EN RAFIA DE 250 GR---30M-", "categoria": "OTROS", "tipo": "", "dimension": "", "longitud": "30M", "wll": "", "stockInicial": 0}, {"code": "TR000112", "name": "BICHEROS---1.65M-", "categoria": "OTROS", "tipo": "", "dimension": "", "longitud": "1.65M", "wll": "", "stockInicial": 10}, {"code": "TR000113", "name": "CUERPO DE BICHERO---1.65M-", "categoria": "OTROS", "tipo": "", "dimension": "", "longitud": "1.65M", "wll": "", "stockInicial": 0}, {"code": "TR000114", "name": "LLAVE DE TRINCA-CORTA--0.5M-0", "categoria": "OTROS", "tipo": "CORTA", "dimension": "", "longitud": "0.5M", "wll": "", "stockInicial": 12}, {"code": "TR000115", "name": "LLAVE DE TRINCA-LARGA--0.6M-0", "categoria": "OTROS", "tipo": "LARGA", "dimension": "", "longitud": "0.6M", "wll": "", "stockInicial": 10}, {"code": "TR000116", "name": "SPREADER SEPARADOR---4M-15 TON", "categoria": "SEPARADOR", "tipo": "", "dimension": "", "longitud": "4M", "wll": "15 TON", "stockInicial": 2}, {"code": "TR000117", "name": "SPREADER SEPARADOR ---6M-15 TON", "categoria": "SEPARADOR", "tipo": "", "dimension": "", "longitud": "6M", "wll": "15 TON", "stockInicial": 2}, {"code": "TR000118", "name": "SPREADER SEPARADOR ---2M-25 TON", "categoria": "SEPARADOR", "tipo": "", "dimension": "", "longitud": "2M", "wll": "25 TON", "stockInicial": 2}, {"code": "TR000119", "name": "SPREADER SEPARADOR---3.2M-25 TON", "categoria": "SEPARADOR", "tipo": "", "dimension": "", "longitud": "3.2M", "wll": "25 TON", "stockInicial": 6}, {"code": "TR000120", "name": "SPREADER SEPARADOR---3M-25 TON", "categoria": "SEPARADOR", "tipo": "", "dimension": "", "longitud": "3M", "wll": "25 TON", "stockInicial": 3}, {"code": "TR000121", "name": "SPREADER SEPARADOR---4M-25 TON", "categoria": "SEPARADOR", "tipo": "", "dimension": "", "longitud": "4M", "wll": "25 TON", "stockInicial": 6}, {"code": "TR000122", "name": "SPREADER SEPARADOR MULTIPLE---6M-25 TON", "categoria": "SEPARADOR", "tipo": "", "dimension": "", "longitud": "6M", "wll": "25 TON", "stockInicial": 2}, {"code": "TR000123", "name": "SPREADER SEPARADOR ---6M-25 TON", "categoria": "SEPARADOR", "tipo": "", "dimension": "", "longitud": "6M", "wll": "25 TON", "stockInicial": 4}, {"code": "TR000124", "name": "SPREADER SEPARADOR ---9M-25 TON", "categoria": "SEPARADOR", "tipo": "", "dimension": "", "longitud": "9M", "wll": "25 TON", "stockInicial": 2}, {"code": "TR000125", "name": "SPREADER SEPARADOR---12M-25 TON", "categoria": "SEPARADOR", "tipo": "", "dimension": "", "longitud": "12M", "wll": "25 TON", "stockInicial": 1}, {"code": "TR000126", "name": "SPREADER SEPARADOR---3.2M-40 TON", "categoria": "SEPARADOR", "tipo": "", "dimension": "", "longitud": "3.2M", "wll": "40 TON", "stockInicial": 2}, {"code": "TR000127", "name": "COLCHONETA GRANDE -GRANDE --2M-", "categoria": "OTROS", "tipo": "GRANDE ", "dimension": "", "longitud": "2M", "wll": "", "stockInicial": 4}, {"code": "TR000128", "name": "COLCHONETA MEDIANA-MEDIANO--1M-", "categoria": "OTROS", "tipo": "MEDIANO", "dimension": "", "longitud": "1M", "wll": "", "stockInicial": 6}, {"code": "TR000129", "name": "COLCHONETA PEQUEÑA-PEQUEÑO--1M-", "categoria": "OTROS", "tipo": "PEQUEÑO", "dimension": "", "longitud": "1M", "wll": "", "stockInicial": 3}, {"code": "TR000130", "name": "RECOGEDOR DE CUCHARA METALICA----", "categoria": "OTROS", "tipo": "", "dimension": "", "longitud": "", "wll": "", "stockInicial": 23}, {"code": "TR000131", "name": "ESCOBAS DE METAL-LARGA---", "categoria": "OTROS", "tipo": "LARGA", "dimension": "", "longitud": "", "wll": "", "stockInicial": 35}, {"code": "TR000132", "name": "PALAS----", "categoria": "OTROS", "tipo": "", "dimension": "", "longitud": "", "wll": "", "stockInicial": 22}, {"code": "TR000133", "name": "CORTA ZUNCHO----", "categoria": "OTROS", "tipo": "", "dimension": "", "longitud": "", "wll": "", "stockInicial": 2}, {"code": "TR000134", "name": "BARRA DE LUZ RECARGABLE----", "categoria": "OTROS", "tipo": "", "dimension": "", "longitud": "", "wll": "", "stockInicial": 10}, {"code": "TR000135", "name": "PALETAS DE PARE Y SIGA----", "categoria": "OTROS", "tipo": "", "dimension": "", "longitud": "", "wll": "", "stockInicial": 6}, {"code": "TR000136", "name": "KIT CAJA DE HERRAMIENTAS C/ HERRAMIENTAS MANUALES-VARIOS---", "categoria": "TOOLS", "tipo": "VARIOS", "dimension": "", "longitud": "", "wll": "", "stockInicial": 4}, {"code": "TR000137", "name": "AUTOMATICO-AUTOMATICO---", "categoria": "GANCHO", "tipo": "AUTOMATICO", "dimension": "", "longitud": "", "wll": "", "stockInicial": 0}, {"code": "TR000138", "name": "PUNTA DE BICHERO----", "categoria": "BICHEROS", "tipo": "", "dimension": "", "longitud": "", "wll": "", "stockInicial": 20}, {"code": "TR000139", "name": "CUERPO DE BICHERO----", "categoria": "BICHEROS", "tipo": "", "dimension": "", "longitud": "", "wll": "", "stockInicial": 20}, {"code": "TR000140", "name": "TECLE TIPO RATCHET----", "categoria": "TOOLS", "tipo": "", "dimension": "", "longitud": "", "wll": "", "stockInicial": 1}, {"code": "TR000141", "name": "AMOLADORA----", "categoria": "TOOLS", "tipo": "", "dimension": "", "longitud": "", "wll": "", "stockInicial": 2}, {"code": "TR000142", "name": "CARETA FACIAL----", "categoria": "TOOLS", "tipo": "", "dimension": "", "longitud": "", "wll": "", "stockInicial": 2}, {"code": "TR000143", "name": "VARILLA LUMINOSA----", "categoria": "TOOLS", "tipo": "", "dimension": "", "longitud": "", "wll": "", "stockInicial": 6}, {"code": "TR000144", "name": "BARRA DE TRINCA PARA MAQUINARIAS----", "categoria": "TOOLS", "tipo": "", "dimension": "", "longitud": "", "wll": "", "stockInicial": 4}, {"code": "TR000145", "name": "ESCALERA 3 PASOS----", "categoria": "TOOLS", "tipo": "", "dimension": "", "longitud": "", "wll": "", "stockInicial": 8}, {"code": "TR000146", "name": "CABLES ZIP TIES NATURAL -PAQUETE 100-4.8\"-380MM -", "categoria": "TOOLS", "tipo": "PAQUETE 100", "dimension": "4.8\"", "longitud": "380MM ", "wll": "", "stockInicial": 19000}, {"code": "TR000147", "name": "ZIPPER BAG --5-7-", "categoria": "TOOLS", "tipo": "", "dimension": 5, "longitud": 7, "wll": "", "stockInicial": 19000}, {"code": "TR000148", "name": "LINTERNA --6.5\"--", "categoria": "TOOLS", "tipo": "", "dimension": "6.5\"", "longitud": "", "wll": "", "stockInicial": 57}, {"code": "TR000149", "name": "KIT MULTICORTE----", "categoria": "TOOLS", "tipo": "", "dimension": "", "longitud": "", "wll": "", "stockInicial": 3}, {"code": "TR000150", "name": "ESLINGA PLANA -OJO - OJO--2M-2.8 TON", "categoria": "ESLINGA", "tipo": "OJO - OJO", "dimension": "", "longitud": "2M", "wll": "2.8 TON", "stockInicial": 204}, {"code": "TR000151", "name": "ESLINGA PLANA -OJO - OJO--2M-2 TON", "categoria": "ESLINGA", "tipo": "OJO - OJO", "dimension": "", "longitud": "2M", "wll": "2 TON", "stockInicial": 350}, {"code": "TR000152", "name": "ESLINGA PLANA-OJO - OJO--6M-4.2 TON", "categoria": "ESLINGA", "tipo": "OJO - OJO", "dimension": "", "longitud": "6M", "wll": "4.2 TON", "stockInicial": 47}, {"code": "TR000153", "name": "CUADRANTE 40´----", "categoria": "CUADRANTE", "tipo": "", "dimension": "", "longitud": "", "wll": "", "stockInicial": 3}, {"code": "TR000154", "name": "CUADRANTE 20´----", "categoria": "CUADRANTE", "tipo": "", "dimension": "", "longitud": "", "wll": "", "stockInicial": 3}, {"code": "TR000155", "name": "ESTROBO DE ACERO NEGRO-OJO - OJO-1 1/8\"-6M-14.1 TON", "categoria": "ESTROBO", "tipo": "OJO - OJO", "dimension": "1 1/8\"", "longitud": "6M", "wll": "14.1 TON", "stockInicial": 12}, {"code": "TR000156", "name": "RADIO PDA----", "categoria": "PDA", "tipo": "", "dimension": "", "longitud": "", "wll": "", "stockInicial": 60}];
+const BARCOS = ["LAKONIA", "CEMEX", "MENPHIS", "DRACO", "COSCO", "CMA CGM", "ECO MARIN"];
+const DESTINOS = ["MUELLE 01", "MUELLE 02", "MUELLE 03", "MUELLE 04", "PATIO", "PATIO/MINERALES", "PATIO/AFORO", "PATIO/A6"];
+const RESPONSABLES = ["ALEX FLORES", "ANDRES SILVA", "JUNIOR", "SAUL", "SIXTO", "ROBERTO CHICO", "RONALD VENTURA", "JORGE GUILLEN", "DIEGO MELGAREJO", "SERGIO CUNZA", "FERNANDO PUNTILLO", "CARLOS SILVA", "CARLOS RIOS", "JAIME HEREDIA", "KAROLAY ROJAS", "GRECIA", "LIZ ESCOBAR", "JENIFER", "FANNY", "YADIRA", "JESUS", "JAVIER GONZALES", "MOISES"];
+
+const BARCO_TIPO = {
+  'LAKONIA':'CONTEINERO', 'CEMEX':'CARGA GENERAL', 'MENPHIS':'MIXTO',
+  'DRACO':'CONTEINERO', 'COSCO':'CARGA GENERAL', 'CMA CGM':'CONTEINERO', 'ECO MARIN':'MIXTO'
+};
+
+/* MATERIAL_ITEMS ya trae código de barra + specs reales + stock histórico (ver arriba) */
+const CODE_TO_ITEM = {};
+MATERIAL_ITEMS.forEach(it=> CODE_TO_ITEM[it.code] = it);
+function findMaterial(query){
+  if(!query) return null;
+  const q = query.trim();
+  const qUpper = q.toUpperCase().replace(/\s+/g,'');
+  // 1) exact code match
+  const byCode = MATERIAL_ITEMS.find(it=> it.code.toUpperCase() === qUpper);
+  if(byCode) return byCode;
+  // 2) exact name match
+  const byName = MATERIAL_ITEMS.find(it=> it.name.toUpperCase() === q.toUpperCase());
+  if(byName) return byName;
+  return null;
+}
+
+const STORAGE_PREFIX = 'registro:';
+let RECORDS = [];
+let currentView = 'salida';
+let devModalRecordId = null;
+let repModalRecordId = null;
+let s_turno = null, s_retorno = null;
+let ub_turno = null;
+let CART = [];          // materiales agregados a la salida en curso: {code, name, buen, dosUso}
+let scanStream = null;
+let scanDetector = null;
+let scanLoopId = null;
+let scanLastCode = null;
+let scanLastTime = 0;
+let scanMode = 'cart'; // 'cart' (Salida) o 'ficha' (Consulta de material)
+
+/* ---------------- Storage helpers ---------------- */
+function uid(){
+  return 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+}
+
+/* Capa de almacenamiento con 3 niveles de respaldo, de mejor a peor:
+   1) window.storage — dentro del entorno de Claude: persistente y compartido entre dispositivos.
+   2) localStorage — archivo abierto directo en el navegador: persistente, solo en ese navegador/dispositivo.
+      (Algunos navegadores bloquean localStorage cuando el archivo se abre como file://, así que se
+      prueba de verdad al iniciar, no solo se asume que existe.)
+   3) Memoria (variable en RAM) — último recurso si hasta localStorage falla: la app funciona durante
+      la sesión, pero se pierde todo al cerrar o recargar la pestaña. Se avisa claramente en pantalla. */
+const HAS_CLOUD_STORAGE = (typeof window.storage !== 'undefined' && window.storage && typeof window.storage.set === 'function');
+const LOCAL_PREFIX = 'controltr::';
+const MEMORY_STORE = {};
+
+function localStorageWorks(){
+  try{
+    const testKey = LOCAL_PREFIX + '__test__';
+    localStorage.setItem(testKey, '1');
+    localStorage.removeItem(testKey);
+    return true;
+  }catch(e){
+    return false;
+  }
+}
+const HAS_LOCAL_STORAGE = !HAS_CLOUD_STORAGE && (typeof localStorage !== 'undefined') && localStorageWorks();
+const STORAGE_MODE = HAS_CLOUD_STORAGE ? 'cloud' : (HAS_LOCAL_STORAGE ? 'local' : 'memory');
+
+async function storageList(prefix, shared){
+  if(STORAGE_MODE === 'cloud') return await window.storage.list(prefix, shared);
+  if(STORAGE_MODE === 'local'){
+    const keys = [];
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(k && k.startsWith(LOCAL_PREFIX + prefix)) keys.push(k.slice(LOCAL_PREFIX.length));
+    }
+    return {keys, prefix, shared};
+  }
+  return {keys: Object.keys(MEMORY_STORE).filter(k=>k.startsWith(prefix)), prefix, shared};
+}
+async function storageGet(key, shared){
+  if(STORAGE_MODE === 'cloud') return await window.storage.get(key, shared);
+  if(STORAGE_MODE === 'local'){
+    const raw = localStorage.getItem(LOCAL_PREFIX + key);
+    return raw === null ? null : {key, value: raw, shared};
+  }
+  return MEMORY_STORE.hasOwnProperty(key) ? {key, value: MEMORY_STORE[key], shared} : null;
+}
+async function storageSet(key, value, shared){
+  if(STORAGE_MODE === 'cloud') return await window.storage.set(key, value, shared);
+  if(STORAGE_MODE === 'local'){
+    localStorage.setItem(LOCAL_PREFIX + key, value);
+    return {key, value, shared};
+  }
+  MEMORY_STORE[key] = value;
+  return {key, value, shared};
+}
+
+async function loadAllRecords(){
+  try{
+    const listRes = await storageList(STORAGE_PREFIX, true);
+    const keys = (listRes && listRes.keys) ? listRes.keys : [];
+    const out = [];
+    for(const k of keys){
+      try{
+        const res = await storageGet(k, true);
+        if(res && res.value){
+          out.push(JSON.parse(res.value));
+        }
+      }catch(e){ /* skip unreadable key */ }
+    }
+    out.sort((a,b)=> (a.fechaSalida||'').localeCompare(b.fechaSalida||'') || (a.createdAt||0)-(b.createdAt||0));
+    RECORDS = out;
+  }catch(e){
+    console.error('Error cargando registros', e);
+    showToast('No se pudieron cargar los registros guardados: ' + (e && e.message ? e.message : e));
+    RECORDS = [];
+  }
+}
+
+async function saveRecord(rec){
+  try{
+    const res = await storageSet(STORAGE_PREFIX + rec.id, JSON.stringify(rec), true);
+    if(!res){ showToast('No se pudo guardar el registro'); return false; }
+    return true;
+  }catch(e){
+    console.error(e);
+    showToast('Error al guardar: ' + (e && e.message ? e.message : 'revisa la consola'));
+    return false;
+  }
+}
+
+/* ---------------- Utility ---------------- */
+function todayISO(){
+  const d = new Date();
+  const tz = d.getTimezoneOffset()*60000;
+  return new Date(d - tz).toISOString().slice(0,10);
+}
+function fmtDate(iso){
+  if(!iso) return '—';
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+function num(v){ const n = Number(v); return isNaN(n) ? 0 : n; }
+
+function computeEstado(rec){
+  if(rec.conRetorno === 'SIN RETORNO') return 'SIN RETORNO';
+  if(!rec.fechaEntrega) return 'PENDIENTE';
+  const totalOut = num(rec.buenEstado) + num(rec.segundoUso);
+  const totalDev = num(rec.devBuenEstado) + num(rec.devSegundoUso) + num(rec.devPorReparar) + num(rec.devDeBaja);
+  const diff = totalOut - totalDev;
+  if(diff === 0) return 'OK';
+  if(diff > 0) return 'PENDIENTE';
+  return 'REVISAR';
+}
+
+function estadoBadge(estado){
+  switch(estado){
+    case 'OK': return {cls:'ok', txt:'✓ OK'};
+    case 'PENDIENTE': return {cls:'pend', txt:'⏳ Pendiente'};
+    case 'REVISAR': return {cls:'revisar', txt:'⚠ Revisar'};
+    case 'SIN RETORNO': return {cls:'sinret', txt:'⬛ Sin Retorno'};
+    default: return {cls:'pend', txt:estado};
+  }
+}
+
+function repTotal(rec){
+  return (rec.reparaciones||[]).reduce((s,r)=> s + num(r.cantidad), 0);
+}
+function repSaldo(rec){
+  return num(rec.devPorReparar) - repTotal(rec);
+}
+function repEstado(rec){
+  const t = repTotal(rec);
+  const saldo = repSaldo(rec);
+  if(saldo <= 0 && num(rec.devPorReparar) > 0) return 'COMPLETO';
+  if(t === 0) return 'PENDIENTE';
+  return 'PROCESO';
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(()=> t.classList.remove('show'), 2400);
+}
+
+/* ---------------- Populate static selects/datalists ---------------- */
+function populateStaticLists(){
+  const matList = document.getElementById('materialesList');
+  matList.innerHTML = MATERIAL_ITEMS.map(it=>`<option value="${escapeHtml(it.name)}" label="${it.code}">`).join('');
+
+  const barcoSel = document.getElementById('s_barco');
+  barcoSel.innerHTML = BARCOS.map(b=>`<option value="${b}">${b}</option>`).join('');
+
+  const destSel = document.getElementById('s_destino');
+  destSel.innerHTML = DESTINOS.map(d=>`<option value="${d}">${d}</option>`).join('');
+
+  const respSel = document.getElementById('s_resp');
+  respSel.innerHTML = RESPONSABLES.map(r=>`<option value="${r}">${r}</option>`).join('');
+  const supSel = document.getElementById('s_sup');
+  supSel.innerHTML = '<option value="">— Opcional —</option>' + RESPONSABLES.map(r=>`<option value="${r}">${r}</option>`).join('');
+
+  ['d_filtroBarco','r_filtroBarco'].forEach(id=>{
+    const sel = document.getElementById(id);
+    BARCOS.forEach(b=>{
+      const o = document.createElement('option');
+      o.value = b; o.textContent = b;
+      sel.appendChild(o);
+    });
+  });
+
+  const ubSel = document.getElementById('ub_filtroUbicacion');
+  DESTINOS.forEach(d=>{
+    const o = document.createElement('option');
+    o.value = d; o.textContent = d;
+    ubSel.appendChild(o);
+  });
+
+  const ubCoord = document.getElementById('ub_coordinador');
+  RESPONSABLES.forEach(r=>{
+    const o = document.createElement('option');
+    o.value = r; o.textContent = r;
+    ubCoord.appendChild(o);
+  });
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ---------------- Visita suggestion ---------------- */
+function suggestVisita(barco, fecha){
+  if(!barco) return 1;
+  const same = RECORDS.filter(r=> r.barco===barco && r.fechaSalida===fecha);
+  if(same.length) return same[0].visita;
+  const visitas = RECORDS.filter(r=> r.barco===barco).map(r=>num(r.visita));
+  return visitas.length ? Math.max(...visitas)+1 : 1;
+}
+
+/* ---------------- Salida form ---------------- */
+function initSalidaForm(){
+  document.getElementById('s_fecha').value = todayISO();
+
+  document.querySelectorAll('#s_turno_group .toggle-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('#s_turno_group .toggle-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      s_turno = btn.dataset.val;
+    });
+  });
+  document.querySelectorAll('#s_retorno_group .toggle-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('#s_retorno_group .toggle-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      s_retorno = btn.dataset.val;
+    });
+  });
+  // defaults
+  document.querySelector('#s_turno_group .toggle-btn[data-val="DIA"]').click();
+  document.querySelector('#s_retorno_group .toggle-btn[data-val="CON RETORNO"]').click();
+
+  const barcoSel = document.getElementById('s_barco');
+  const tipoSel = document.getElementById('s_tipo');
+  const fechaInp = document.getElementById('s_fecha');
+  const visitaInp = document.getElementById('s_visita');
+
+  function refreshVisita(){
+    tipoSel.value = BARCO_TIPO[barcoSel.value] || 'CONTEINERO';
+    visitaInp.value = suggestVisita(barcoSel.value, fechaInp.value);
+  }
+  barcoSel.addEventListener('change', refreshVisita);
+  fechaInp.addEventListener('change', refreshVisita);
+  barcoSel.selectedIndex = 0;
+  refreshVisita();
+
+  document.getElementById('formSalida').addEventListener('submit', (e)=> e.preventDefault());
+
+  /* ---- Carrito de materiales ---- */
+  const mpInput = document.getElementById('mp_input');
+  document.getElementById('mp_addBtn').addEventListener('click', ()=> addFromQuery(mpInput.value, mpInput));
+  mpInput.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      addFromQuery(mpInput.value, mpInput);
+    }
+  });
+
+  document.getElementById('btnRegistrarSalida').addEventListener('click', ()=>{
+    submitSalida().catch(e=>{
+      console.error('Error registrando salida', e);
+      showToast('Error al registrar: ' + (e && e.message ? e.message : 'revisa la consola'));
+    });
+  });
+  renderCart();
+}
+
+function addFromQuery(query, inputEl){
+  const item = findMaterial(query);
+  if(!item){
+    showToast('Material no encontrado: "' + query + '"');
+    return;
+  }
+  addToCart(item);
+  if(inputEl){ inputEl.value=''; inputEl.focus(); }
+}
+
+function addToCart(item){
+  const existing = CART.find(c=>c.code===item.code);
+  if(existing){
+    existing.buen += 1;
+  } else {
+    CART.push({code:item.code, name:item.name, buen:1, dosUso:0});
+  }
+  renderCart();
+  showToast('Agregado: ' + item.name);
+  if(navigator.vibrate) navigator.vibrate(60);
+}
+
+function computeLiveStats(item){
+  const K = num(item.stockInicial);
+  const recs = RECORDS.filter(r=> r.material===item.name);
+  let sinRetornoG=0, sinRetornoH=0, devSegundoUsoSum=0, devPorRepararSum=0, repTotalSum=0, N=0, O=0;
+  recs.forEach(r=>{
+    if(r.conRetorno==='SIN RETORNO'){
+      sinRetornoG += num(r.buenEstado);
+      sinRetornoH += num(r.segundoUso);
+    }
+    devSegundoUsoSum += num(r.devSegundoUso);
+    devPorRepararSum += num(r.devPorReparar);
+    repTotalSum += repTotal(r);
+    const movimiento = num(r.buenEstado) + num(r.segundoUso) - num(r.devBuenEstado) - num(r.devSegundoUso) - num(r.devDeBaja);
+    if(r.conRetorno==='CON RETORNO' && num(r.buenEstado)>0) N += movimiento;
+    if(r.conRetorno==='CON RETORNO' && num(r.segundoUso)>0) O += movimiento;
+  });
+  const R = devPorRepararSum - repTotalSum;           // Por Reparar (saldo pendiente)
+  const L = K - sinRetornoG - R;                      // Buen Estado — stock real
+  const M2 = devSegundoUsoSum - sinRetornoH;           // 2da Vida — stock real
+  const P = L - N;                                    // Buen Estado — disponible en TR
+  const Q = M2 - O;                                    // 2da Vida — disponible en TR
+  return {
+    stockReal: L + M2,
+    enMovimiento: N + O,
+    porReparar: Math.max(R, 0),
+    disponible: P + Q,
+    movimientosRegistrados: recs.length
+  };
+}
+
+let LAST_STOCK_SEARCH = { query: '', items: [] };
+
+/* ---------------- Ubicación: equipos pendientes de devolución, por destino ---------------- */
+function initUbicacionForm(){
+  document.getElementById('ub_fecha').value = todayISO();
+  document.querySelectorAll('#ub_turno_group .toggle-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('#ub_turno_group .toggle-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      ub_turno = btn.dataset.val;
+    });
+  });
+  const hh = new Date().getHours();
+  const defaultTurno = (hh>=7 && hh<19) ? 'DIA' : 'NOCHE';
+  document.querySelector(`#ub_turno_group .toggle-btn[data-val="${defaultTurno}"]`).click();
+}
+
+function getPendingByUbicacion(){
+  const pending = RECORDS.filter(r=> r.conRetorno==='CON RETORNO' && !r.fechaEntrega);
+  const groups = {};
+  pending.forEach(r=>{
+    const ubic = r.destino || 'SIN UBICACIÓN';
+    if(!groups[ubic]) groups[ubic] = [];
+    groups[ubic].push(r);
+  });
+  return groups;
+}
+
+function renderUbicacion(){
+  const filtro = document.getElementById('ub_filtroUbicacion').value;
+  const groups = getPendingByUbicacion();
+  const wrap = document.getElementById('ubicacionList');
+  let ubicaciones = Object.keys(groups).sort();
+  if(filtro) ubicaciones = ubicaciones.filter(u=>u===filtro);
+
+  if(ubicaciones.length===0){
+    wrap.innerHTML = `<div class="empty"><div class="ic">📍</div><h3 style="text-transform:none;font-family:Inter;font-weight:600;font-size:14px;">Nada pendiente por ubicación</h3><p>Cuando haya salidas "Con Retorno" sin devolver, aparecerán agrupadas aquí.</p></div>`;
+    return;
+  }
+
+  wrap.innerHTML = ubicaciones.map(ubic=>{
+    const items = groups[ubic];
+    return `
+      <div class="ubic-group">
+        <div class="ubic-group-head">
+          <span class="name">📍 ${escapeHtml(ubic)}</span>
+          <span class="count">${items.length} pendiente${items.length===1?'':'s'}</span>
+        </div>
+        ${items.map(r=>`
+          <div class="ubic-item">
+            <div>
+              <div class="mat">${escapeHtml(r.material)}</div>
+              <div class="meta">${escapeHtml(r.barco)} · ${fmtDate(r.fechaSalida)} · ${escapeHtml(r.responsableRetiro||'—')}</div>
+            </div>
+            <div class="qty">${num(r.buenEstado)+num(r.segundoUso)}</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }).join('');
+}
+
+function exportUbicacionPdf(){
+  if(typeof window.jspdf === 'undefined'){
+    showToast('No se pudo cargar el generador de PDF. Revisa tu conexión e intenta de nuevo.');
+    return;
+  }
+  const filtro = document.getElementById('ub_filtroUbicacion').value;
+  const groups = getPendingByUbicacion();
+  let ubicaciones = Object.keys(groups).sort();
+  if(filtro) ubicaciones = ubicaciones.filter(u=>u===filtro);
+  if(ubicaciones.length===0){ showToast('No hay equipos pendientes para exportar'); return; }
+
+  const turnoFecha = document.getElementById('ub_fecha').value || todayISO();
+  const turno = ub_turno || '—';
+  const coordinador = document.getElementById('ub_coordinador').value || '—';
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit:'mm', format:'a4', orientation:'portrait' });
+  const pageW = 210, pageH = 297, marginX = 14;
+  let y = 0;
+
+  const now = new Date();
+  const genTs = String(now.getDate()).padStart(2,'0') + '/' + String(now.getMonth()+1).padStart(2,'0') + '/' + now.getFullYear() +
+             ' ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+
+  function drawDocHeader(){
+    doc.setFillColor(7,59,76);
+    doc.rect(0,0,pageW,30,'F');
+    doc.setTextColor(255,255,255);
+    doc.setFont('helvetica','bold'); doc.setFontSize(13);
+    doc.text('ASIGNACIÓN DE EQUIPAMIENTO', marginX, 9);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8);
+    doc.text('COSCO SHIPPING PORTS CHANCAY · TR — Equipos pendientes de devolución por ubicación', marginX, 14);
+    doc.setFont('helvetica','bold'); doc.setFontSize(8.5);
+    doc.text('FECHA: ' + fmtDate(turnoFecha), marginX, 21);
+    doc.text('TURNO: ' + turno, marginX+55, 21);
+    doc.text('COORDINADOR DE EQUIPOS: ' + coordinador, marginX, 26.5);
+    doc.setFont('helvetica','normal'); doc.setFontSize(6.8);
+    doc.text('Generado: ' + genTs, pageW-marginX, 26.5, {align:'right'});
+    doc.setTextColor(20,30,45);
+    y = 38;
+  }
+
+  const colX = [marginX, marginX+70, marginX+108, marginX+133, marginX+163];
+  const colW = [70, 38, 25, 30, 210-marginX-163-marginX];
+
+  function drawTableHeader(){
+    doc.setFillColor(230,236,242);
+    doc.rect(marginX, y, pageW-2*marginX, 7, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(7.5);
+    doc.setTextColor(60,75,95);
+    doc.text('MATERIAL', colX[0]+1.5, y+4.8);
+    doc.text('BARCO', colX[1]+1.5, y+4.8);
+    doc.text('CANT.', colX[2]+1.5, y+4.8);
+    doc.text('F. SALIDA', colX[3]+1.5, y+4.8);
+    doc.text('VALIDACIÓN', colX[4]+1.5, y+4.8);
+    doc.setTextColor(20,30,45);
+    y += 7;
+  }
+
+  function ensureSpace(rowsNeeded, onBreak){
+    if(y + rowsNeeded*7 > pageH - 15){
+      doc.addPage();
+      drawDocHeader();
+      if(onBreak) onBreak();
+      return true;
+    }
+    return false;
+  }
+
+  drawDocHeader();
+
+  ubicaciones.forEach(ubic=>{
+    const items = groups[ubic];
+    ensureSpace(3);
+    doc.setFillColor(7,59,76);
+    doc.rect(marginX, y, pageW-2*marginX, 7.5, 'F');
+    doc.setTextColor(255,255,255);
+    doc.setFont('helvetica','bold'); doc.setFontSize(9.5);
+    doc.text(ubic.toUpperCase(), marginX+2, y+5.2);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
+    doc.text(items.length + ' pendiente(s)', pageW-marginX-2, y+5.2, {align:'right'});
+    doc.setTextColor(20,30,45);
+    y += 7.5;
+
+    drawTableHeader();
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.6);
+    items.forEach((r, idx)=>{
+      ensureSpace(1, ()=> drawTableHeader());
+      if(idx % 2 === 1){
+        doc.setFillColor(247,249,251);
+        doc.rect(marginX, y, pageW-2*marginX, 7, 'F');
+      }
+      const matLines = doc.splitTextToSize(r.material, colW[0]-3);
+      doc.text(matLines[0] + (matLines.length>1?'…':''), colX[0]+1.5, y+4.8);
+      doc.text(String(r.barco||''), colX[1]+1.5, y+4.8);
+      doc.text(String(num(r.buenEstado)+num(r.segundoUso)), colX[2]+1.5, y+4.8);
+      doc.text(fmtDate(r.fechaSalida), colX[3]+1.5, y+4.8);
+      doc.rect(colX[4]+1.5, y+1.3, colW[4]-4, 4.4); // checkbox-style blank validation cell
+      y += 7;
+    });
+    y += 5;
+  });
+
+  doc.save(`Asignacion_Equipamiento_${turnoFecha}_${turno}.pdf`);
+  showToast('PDF descargado');
+}
+
+function buildCategoryChips(){
+  const cats = [...new Set(MATERIAL_ITEMS.map(it=>it.categoria).filter(Boolean))].sort();
+  const wrap = document.getElementById('categoryChips');
+  wrap.innerHTML = `<button type="button" class="chip chip-all" data-cat="__ALL__">Ver todos (${MATERIAL_ITEMS.length})</button>` +
+    cats.map(c=>`<button type="button" class="chip" data-cat="${escapeHtml(c)}">${escapeHtml(c)}</button>`).join('');
+  wrap.querySelectorAll('.chip').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const cat = btn.dataset.cat;
+      setActiveChip(cat);
+      if(cat === '__ALL__'){
+        renderStockCategoryTable(MATERIAL_ITEMS, 'Todos los materiales');
+      } else {
+        const items = MATERIAL_ITEMS.filter(it=> it.categoria === cat);
+        renderStockCategoryTable(items, cat);
+      }
+    });
+  });
+}
+function setActiveChip(cat){
+  document.querySelectorAll('#categoryChips .chip').forEach(b=>{
+    b.classList.toggle('active', cat!==null && b.dataset.cat===cat);
+  });
+}
+
+function addFichaFromQuery(query, inputEl){
+  const q = (query||'').trim();
+  if(!q){ showToast('Escribe un código, nombre o categoría'); return; }
+  setActiveChip(null);
+
+  const exact = findMaterial(q);
+  if(exact){
+    renderFichaCard(exact);
+    if(inputEl){ inputEl.value=''; }
+    return;
+  }
+
+  const qUpper = q.toUpperCase();
+  const partials = MATERIAL_ITEMS.filter(it=>
+    it.name.toUpperCase().includes(qUpper) || (it.categoria||'').toUpperCase().includes(qUpper)
+  );
+  if(partials.length === 0){
+    showToast('No se encontró ningún material con "' + q + '"');
+    return;
+  }
+  renderStockCategoryTable(partials, q);
+  if(inputEl){ inputEl.value=''; }
+}
+
+function renderStockCategoryTable(items, query){
+  LAST_STOCK_SEARCH = { query, items };
+  const rows = items.map(it=>({ item: it, stats: computeLiveStats(it) }));
+  const totalDisponible = rows.reduce((s,r)=> s + r.stats.disponible, 0);
+  const totalStockReal = rows.reduce((s,r)=> s + r.stats.stockReal, 0);
+  const now = new Date();
+  const ts = String(now.getDate()).padStart(2,'0') + '/' + String(now.getMonth()+1).padStart(2,'0') + '/' + now.getFullYear() +
+             ' ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+
+  const wrap = document.getElementById('fichaResult');
+  wrap.innerHTML = `
+    <div class="ficha-card">
+      <div class="ficha-head">
+        <div class="ficha-eyebrow">
+          <span>COSCO SHIPPING PORTS CHANCAY · TR</span>
+          <span class="ficha-code-pill">${rows.length} material(es)</span>
+        </div>
+        <div class="ficha-title">Resultados: "${escapeHtml(query)}"</div>
+        <div class="ficha-subtitle">Stock real total ${totalStockReal} · Disponible total ${totalDisponible}</div>
+      </div>
+      <div style="padding:6px 14px 4px;">
+        ${rows.map(r=>`
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; padding:10px 2px; border-bottom:1px solid var(--line);">
+            <div style="flex:1; min-width:0;">
+              <div style="font-size:12.5px; font-weight:600; color:var(--ink); line-height:1.3;">${escapeHtml(r.item.name)}</div>
+              <div class="mono" style="font-size:10px; color:var(--ink-soft); margin-top:2px;">${r.item.code}</div>
+            </div>
+            <div style="display:flex; gap:6px; flex:0 0 auto;">
+              <div style="text-align:center; min-width:2.6em;"><div style="font-family:'Oswald'; font-weight:700; font-size:15px; color:var(--navy);">${r.stats.stockReal}</div><div style="font-size:7.5px; color:var(--ink-soft); text-transform:uppercase;">Real</div></div>
+              <div style="text-align:center; min-width:2.6em;"><div style="font-family:'Oswald'; font-weight:700; font-size:15px; color:var(--navy);">${r.stats.enMovimiento}</div><div style="font-size:7.5px; color:var(--ink-soft); text-transform:uppercase;">Movim.</div></div>
+              <div style="text-align:center; min-width:2.6em;"><div style="font-family:'Oswald'; font-weight:700; font-size:15px; color:${r.stats.porReparar>0?'var(--red)':'var(--navy)'};">${r.stats.porReparar}</div><div style="font-size:7.5px; color:var(--ink-soft); text-transform:uppercase;">Reparar</div></div>
+              <div style="text-align:center; min-width:2.6em;"><div style="font-family:'Oswald'; font-weight:700; font-size:15px; color:var(--teal);">${r.stats.disponible}</div><div style="font-size:7.5px; color:var(--ink-soft); text-transform:uppercase;">Dispon.</div></div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <div style="padding:10px 14px 14px;">
+        <button type="button" class="btn btn-ghost" id="btnExportStockSearch">⬇ Exportar a Excel</button>
+      </div>
+      <div class="ficha-footer">
+        <span>Búsqueda por categoría — cada fila con datos en tiempo real.</span>
+        <span class="ts">${ts}</span>
+      </div>
+    </div>
+  `;
+  document.getElementById('btnExportStockSearch').addEventListener('click', exportStockSearchExcel);
+  if(navigator.vibrate) navigator.vibrate(40);
+}
+
+function exportStockSearchExcel(){
+  const { query, items } = LAST_STOCK_SEARCH;
+  if(!items || items.length===0){ showToast('No hay resultados para exportar'); return; }
+  const headers = ['Código','Material','Categoría','Tipo','Dimensión','Longitud','WLL','Stock Real','En Movimiento','Por Reparar','Disponible Despacho'];
+  const rows = items.map(it=>{
+    const st = computeLiveStats(it);
+    return [it.code, it.name, it.categoria||'', it.tipo||'', it.dimension||'', it.longitud||'', it.wll||'', st.stockReal, st.enMovimiento, st.porReparar, st.disponible];
+  });
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  ws['!cols'] = headers.map((h,i)=> i===1 ? {wch:38} : {wch:14});
+  const wb = XLSX.utils.book_new();
+  const sheetName = ('Stock ' + query).slice(0,31).replace(/[\\/*?:\[\]]/g,'');
+  XLSX.utils.book_append_sheet(wb, ws, sheetName || 'Stock');
+  XLSX.writeFile(wb, `Stock_${query.replace(/\s+/g,'_')}_${todayISO()}.xlsx`);
+  showToast('Excel descargado');
+}
+
+function renderFichaCard(item){
+  const stats = computeLiveStats(item);
+  const now = new Date();
+  const ts = String(now.getDate()).padStart(2,'0') + '/' + String(now.getMonth()+1).padStart(2,'0') + '/' + now.getFullYear() +
+             ' ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+  const wrap = document.getElementById('fichaResult');
+  wrap.innerHTML = `
+    <div class="ficha-card">
+      <div class="ficha-head">
+        <div class="ficha-eyebrow">
+          <span>COSCO SHIPPING PORTS CHANCAY · TR</span>
+          <span class="ficha-code-pill">${item.code}</span>
+        </div>
+        <div class="ficha-title">${escapeHtml(item.categoria || 'MATERIAL')}</div>
+        ${item.tipo ? `<div class="ficha-subtitle">${escapeHtml(item.tipo)}</div>` : ''}
+      </div>
+      <div class="ficha-medida-row">
+        <div class="ficha-medida-cell"><div class="v">${item.dimension ? escapeHtml(String(item.dimension)) : '—'}</div><div class="l">Dimensión</div></div>
+        <div class="ficha-medida-cell"><div class="v">${item.longitud ? escapeHtml(String(item.longitud)) : '—'}</div><div class="l">Longitud</div></div>
+        <div class="ficha-medida-cell"><div class="v">${item.wll ? escapeHtml(String(item.wll)) : '—'}</div><div class="l">WLL (Carga Máx.)</div></div>
+      </div>
+      <div class="ficha-stock-title">Existencia en tiempo real</div>
+      <div class="ficha-stock-row">
+        <div class="ficha-stock-cell"><div class="v">${stats.stockReal}</div><div class="l">Stock<br>Real</div></div>
+        <div class="ficha-stock-cell"><div class="v">${stats.enMovimiento}</div><div class="l">En<br>Movimiento</div></div>
+        <div class="ficha-stock-cell ${stats.porReparar>0?'warn':''}"><div class="v">${stats.porReparar}</div><div class="l">Por<br>Reparar</div></div>
+        <div class="ficha-stock-cell"><div class="v">${stats.disponible}</div><div class="l">Disponible<br>Despacho</div></div>
+      </div>
+      <div class="ficha-note">📦 <b>Descripción completa:</b> ${escapeHtml(item.name)}</div>
+      <div style="padding:0 14px 14px;">
+        <button type="button" class="btn btn-ghost" id="btnExportSingleStock">⬇ Exportar a Excel</button>
+      </div>
+      <div class="ficha-footer">
+        <span>Consulta basada en ${stats.movimientosRegistrados} movimiento(s) registrados en esta app.</span>
+        <span class="ts">${ts}</span>
+      </div>
+    </div>
+  `;
+  document.getElementById('btnExportSingleStock').addEventListener('click', ()=>{
+    LAST_STOCK_SEARCH = { query: item.name, items: [item] };
+    exportStockSearchExcel();
+  });
+  if(navigator.vibrate) navigator.vibrate(40);
+}
+
+function renderCart(){
+  const wrap = document.getElementById('cartList');
+  document.getElementById('cartCount').textContent = CART.length + (CART.length===1 ? ' agregado' : ' agregados');
+  if(CART.length===0){
+    wrap.innerHTML = '<div class="cart-empty">Aún no agregas materiales. Escanea un código o búscalo arriba.</div>';
+    return;
+  }
+  wrap.innerHTML = CART.map((c,i)=>`
+    <div class="cart-item">
+      <div class="ci-info">
+        <div class="ci-name">${escapeHtml(c.name)}</div>
+        <div class="ci-code mono">${c.code}</div>
+      </div>
+      <div class="ci-qty">
+        <div class="qtybox"><label>B.E.</label><input type="number" min="0" value="${c.buen}" onchange="updateCartQty(${i},'buen',this.value)"></div>
+        <div class="qtybox"><label>2do U.</label><input type="number" min="0" value="${c.dosUso}" onchange="updateCartQty(${i},'dosUso',this.value)"></div>
+      </div>
+      <button type="button" class="ci-rm" onclick="removeFromCart(${i})">✕</button>
+    </div>
+  `).join('');
+}
+function updateCartQty(i, field, val){
+  CART[i][field] = Math.max(0, num(val));
+  renderCart();
+}
+function removeFromCart(i){
+  CART.splice(i,1);
+  renderCart();
+}
+
+async function submitSalida(){
+  if(CART.length===0){ showToast('Agrega al menos un material'); return; }
+  const invalid = CART.filter(c=> (c.buen + c.dosUso) <= 0);
+  if(invalid.length){ showToast('Revisa las cantidades: hay materiales en 0'); return; }
+
+  const barcoSel = document.getElementById('s_barco');
+  const tipoSel = document.getElementById('s_tipo');
+  const fechaInp = document.getElementById('s_fecha');
+  const visitaInp = document.getElementById('s_visita');
+  const resp = document.getElementById('s_resp').value;
+  if(!resp){ showToast('Selecciona el responsable de retiro'); return; }
+  if(!s_turno){ showToast('Selecciona el turno'); return; }
+  if(!s_retorno){ showToast('Indica si es con o sin retorno'); return; }
+
+  const header = {
+    fechaSalida: fechaInp.value,
+    turno: s_turno,
+    barco: barcoSel.value,
+    tipoBarco: tipoSel.value,
+    visita: num(visitaInp.value),
+    conRetorno: s_retorno,
+    destino: document.getElementById('s_destino').value,
+    motivo: document.getElementById('s_motivo').value,
+    responsableRetiro: resp,
+    firma: resp,
+    supervisorSalida: document.getElementById('s_sup').value,
+    observacionSalida: document.getElementById('s_obs').value.trim(),
+  };
+
+  let okCount = 0;
+  for(const c of CART){
+    const rec = {
+      id: uid(),
+      createdAt: Date.now(),
+      ...header,
+      material: c.name,
+      buenEstado: c.buen,
+      segundoUso: c.dosUso,
+      fechaEntrega: null,
+      devBuenEstado: null,
+      devSegundoUso: null,
+      devPorReparar: null,
+      devDeBaja: null,
+      responsableDevolucion: '',
+      supervisorDevolucion: '',
+      observacionDevolucion: '',
+      reparaciones: []
+    };
+    const ok = await saveRecord(rec);
+    if(ok){ RECORDS.push(rec); okCount++; }
+  }
+
+  if(okCount>0){
+    showToast(`Salida registrada — ${okCount} material(es) · ${header.barco} · Visita ${header.visita}`);
+    CART = [];
+    renderCart();
+    document.getElementById('s_obs').value = '';
+    document.getElementById('s_fecha').value = todayISO();
+    barcoSel.selectedIndex = 0;
+    tipoSel.value = BARCO_TIPO[barcoSel.value] || 'CONTEINERO';
+    visitaInp.value = suggestVisita(barcoSel.value, fechaInp.value);
+    document.querySelector('#s_turno_group .toggle-btn[data-val="DIA"]').click();
+    document.querySelector('#s_retorno_group .toggle-btn[data-val="CON RETORNO"]').click();
+    renderAll();
+  }
+}
+
+/* ---------------- Devolución view ---------------- */
+function renderDevolucion(){
+  const filtro = document.getElementById('d_filtroBarco').value;
+  const pendientes = RECORDS.filter(r=> r.conRetorno==='CON RETORNO' && !r.fechaEntrega && (!filtro || r.barco===filtro));
+  const wrap = document.getElementById('devolucionList');
+  if(pendientes.length===0){
+    wrap.innerHTML = `<div class="empty"><div class="ic">📥</div><h3 style="text-transform:none;font-family:Inter;font-weight:600;font-size:14px;">Sin devoluciones pendientes</h3><p>Los retiros con retorno aparecerán aquí hasta que registres su devolución.</p></div>`;
+    return;
+  }
+  wrap.innerHTML = pendientes.map(r=>{
+    return `<div class="ticket">
+      <div class="ticket-top">
+        <div>
+          <div class="barco">${escapeHtml(r.barco)}</div>
+          <div class="meta">${fmtDate(r.fechaSalida)} · ${r.turno} · ${escapeHtml(r.destino||'')}</div>
+        </div>
+        <span class="visita">VISITA ${r.visita}</span>
+      </div>
+      <div class="ticket-body">
+        <div class="ticket-mat">${escapeHtml(r.material)}</div>
+        <div class="ticket-row"><span>Retirado</span><b>${num(r.buenEstado)+num(r.segundoUso)} und.</b></div>
+        <div class="ticket-row"><span>Responsable retiro</span><b>${escapeHtml(r.responsableRetiro||'—')}</b></div>
+        <div class="ticket-actions">
+          <button class="btn btn-primary btn-small" onclick="openDevModal('${r.id}')">Registrar devolución</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openDevModal(id){
+  devModalRecordId = id;
+  const r = RECORDS.find(x=>x.id===id);
+  if(!r) return;
+  const totalOut = num(r.buenEstado)+num(r.segundoUso);
+  const body = document.getElementById('devModalBody');
+  body.innerHTML = `
+    <div class="card" style="box-shadow:none;border:1px solid var(--line);margin-bottom:12px;padding:12px;">
+      <div class="ticket-mat" style="margin-bottom:2px;">${escapeHtml(r.material)}</div>
+      <div class="ticket-row"><span>${escapeHtml(r.barco)} · Visita ${r.visita}</span><b>Retirado: ${totalOut}</b></div>
+    </div>
+    <div class="field">
+      <label>Fecha de Entrega</label>
+      <input type="date" id="dm_fecha" value="${todayISO()}">
+    </div>
+    <div class="grid2">
+      <div class="field"><label>Buen Estado</label><input type="number" id="dm_be" min="0" value="0"></div>
+      <div class="field"><label>2do Uso</label><input type="number" id="dm_2u" min="0" value="0"></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label>Por Reparar</label><input type="number" id="dm_rep" min="0" value="0"></div>
+      <div class="field"><label>De Baja</label><input type="number" id="dm_baja" min="0" value="0"></div>
+    </div>
+    <div class="field" id="dm_diffBox" style="background:var(--paper);border-radius:8px;padding:10px 12px;font-size:13px;"></div>
+    <div class="grid2">
+      <div class="field"><label>Responsable Devolución</label><select id="dm_resp"></select></div>
+      <div class="field"><label>Supervisor Responsable</label><select id="dm_sup"><option value="">— Opcional —</option></select></div>
+    </div>
+    <div class="field"><label>Observación</label><textarea id="dm_obs" placeholder="Opcional"></textarea></div>
+    <button class="btn btn-primary" id="dm_save">Guardar Devolución</button>
+  `;
+  const respSel = document.getElementById('dm_resp');
+  respSel.innerHTML = RESPONSABLES.map(x=>`<option value="${x}">${x}</option>`).join('');
+  const supSel = document.getElementById('dm_sup');
+  supSel.innerHTML += RESPONSABLES.map(x=>`<option value="${x}">${x}</option>`).join('');
+
+  function updateDiff(){
+    const be=num(document.getElementById('dm_be').value), u2=num(document.getElementById('dm_2u').value),
+          rp=num(document.getElementById('dm_rep').value), bj=num(document.getElementById('dm_baja').value);
+    const total = be+u2+rp+bj;
+    const diff = totalOut - total;
+    const box = document.getElementById('dm_diffBox');
+    let label, color;
+    if(diff===0){label='✓ OK — coincide con lo retirado'; color='var(--teal)';}
+    else if(diff>0){label=`⏳ Pendiente — faltan ${diff} und. por devolver`; color='var(--amber)';}
+    else{label=`⚠ Revisar — hay ${-diff} und. de más`; color='var(--red)';}
+    box.style.color = color;
+    box.innerHTML = `<b>Total devuelto: ${total} / ${totalOut}</b><br>${label}`;
+  }
+  ['dm_be','dm_2u','dm_rep','dm_baja'].forEach(id=> document.getElementById(id).addEventListener('input', updateDiff));
+  updateDiff();
+
+  document.getElementById('dm_save').addEventListener('click', async ()=>{
+    r.fechaEntrega = document.getElementById('dm_fecha').value || todayISO();
+    r.devBuenEstado = num(document.getElementById('dm_be').value);
+    r.devSegundoUso = num(document.getElementById('dm_2u').value);
+    r.devPorReparar = num(document.getElementById('dm_rep').value);
+    r.devDeBaja = num(document.getElementById('dm_baja').value);
+    r.responsableDevolucion = document.getElementById('dm_resp').value;
+    r.supervisorDevolucion = document.getElementById('dm_sup').value;
+    r.observacionDevolucion = document.getElementById('dm_obs').value.trim();
+    const ok = await saveRecord(r);
+    if(ok){
+      showToast('Devolución registrada');
+      closeDevModal();
+      renderAll();
+    }
+  });
+  document.getElementById('devModal').classList.add('show');
+}
+function closeDevModal(){ document.getElementById('devModal').classList.remove('show'); devModalRecordId=null; }
+
+/* ---------------- Reparación view ---------------- */
+function renderReparacion(){
+  const items = RECORDS.filter(r=> num(r.devPorReparar) > 0);
+  const wrap = document.getElementById('reparacionList');
+  if(items.length===0){
+    wrap.innerHTML = `<div class="empty"><div class="ic">🔧</div><h3 style="text-transform:none;font-family:Inter;font-weight:600;font-size:14px;">Nada pendiente de reparar</h3><p>Cuando registres devoluciones con cantidad "Por Reparar", aparecerán aquí.</p></div>`;
+    return;
+  }
+  wrap.innerHTML = items.map(r=>{
+    const total = repTotal(r), saldo = repSaldo(r), estado = repEstado(r);
+    const pct = r.devPorReparar>0 ? Math.min(100, Math.round(total/r.devPorReparar*100)) : 0;
+    const badge = estado==='COMPLETO' ? {cls:'ok',txt:'✔ Completo'} : estado==='PROCESO' ? {cls:'pend',txt:'🔧 En Proceso'} : {cls:'revisar',txt:'⏳ Pendiente'};
+    return `<div class="ticket">
+      <div class="ticket-top">
+        <div>
+          <div class="barco">${escapeHtml(r.barco)}</div>
+          <div class="meta">${fmtDate(r.fechaEntrega)} · Visita ${r.visita}</div>
+        </div>
+        <span class="visita">${r.devPorReparar} POR REPARAR</span>
+      </div>
+      <div class="ticket-body">
+        <div class="ticket-mat">${escapeHtml(r.material)}</div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;"></div></div>
+        <div class="ticket-row"><span>Reparado</span><b>${total} / ${r.devPorReparar}</b></div>
+        <div class="ticket-row"><span>Saldo pendiente</span><b>${Math.max(saldo,0)}</b></div>
+        <div class="ticket-actions">
+          <span class="stamp ${badge.cls}" style="position:static;transform:none;">${badge.txt}</span>
+          ${estado!=='COMPLETO' ? `<button class="btn btn-primary btn-small" onclick="openRepModal('${r.id}')">Registrar avance</button>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openRepModal(id){
+  repModalRecordId = id;
+  const r = RECORDS.find(x=>x.id===id);
+  if(!r) return;
+  const body = document.getElementById('repModalBody');
+  const saldo = Math.max(repSaldo(r),0);
+  const slotsUsed = (r.reparaciones||[]).length;
+  body.innerHTML = `
+    <div class="card" style="box-shadow:none;border:1px solid var(--line);margin-bottom:12px;padding:12px;">
+      <div class="ticket-mat" style="margin-bottom:2px;">${escapeHtml(r.material)}</div>
+      <div class="ticket-row"><span>${escapeHtml(r.barco)} · Visita ${r.visita}</span><b>Saldo: ${saldo}</b></div>
+    </div>
+    ${slotsUsed>=10 ? '<p class="hint">Ya se registraron 10 avances para este ítem (máximo permitido).</p>' : `
+    <div class="grid2">
+      <div class="field"><label>Fecha de Reparación</label><input type="date" id="rm_fecha" value="${todayISO()}"></div>
+      <div class="field"><label>Cantidad Reparada</label><input type="number" id="rm_cant" min="1" max="${saldo}" value="${saldo>0?1:0}"></div>
+    </div>
+    <button class="btn btn-primary" id="rm_save">Agregar Avance</button>
+    `}
+    <div style="margin-top:16px;">
+      <label style="display:block;font-size:11.5px;font-weight:600;text-transform:uppercase;color:var(--ink-soft);margin-bottom:8px;">Historial (${slotsUsed}/10)</label>
+      <div id="rm_history"></div>
+    </div>
+  `;
+  function renderHistory(){
+    const hist = document.getElementById('rm_history');
+    if(!r.reparaciones || r.reparaciones.length===0){
+      hist.innerHTML = '<p class="hint">Sin avances registrados aún.</p>';
+      return;
+    }
+    hist.innerHTML = r.reparaciones.map((rp,i)=>`
+      <div class="rep-slot" style="border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:8px;">
+        <span class="mono" style="font-size:13px;">${fmtDate(rp.fecha)}</span>
+        <span class="mono" style="font-size:13px;">${rp.cantidad} und.</span>
+        <button class="rm" onclick="removeRepEntry('${r.id}', ${i})">✕</button>
+      </div>
+    `).join('');
+  }
+  renderHistory();
+
+  const saveBtn = document.getElementById('rm_save');
+  if(saveBtn){
+    saveBtn.addEventListener('click', async ()=>{
+      const fecha = document.getElementById('rm_fecha').value || todayISO();
+      const cant = num(document.getElementById('rm_cant').value);
+      if(cant<=0){ showToast('Ingresa una cantidad válida'); return; }
+      if(cant>saldo){ showToast('La cantidad supera el saldo pendiente'); return; }
+      r.reparaciones = r.reparaciones || [];
+      r.reparaciones.push({fecha, cantidad:cant});
+      const ok = await saveRecord(r);
+      if(ok){
+        showToast('Avance registrado');
+        closeRepModal();
+        renderAll();
+      }
+    });
+  }
+  document.getElementById('repModal').classList.add('show');
+}
+async function removeRepEntry(id, idx){
+  const r = RECORDS.find(x=>x.id===id);
+  if(!r) return;
+  r.reparaciones.splice(idx,1);
+  await saveRecord(r);
+  closeRepModal();
+  renderAll();
+}
+function closeRepModal(){ document.getElementById('repModal').classList.remove('show'); repModalRecordId=null; }
+
+/* ---------------- Registros view ---------------- */
+function renderRegistros(){
+  const fBarco = document.getElementById('r_filtroBarco').value;
+  const fEstado = document.getElementById('r_filtroEstado').value;
+  let list = RECORDS.slice().reverse();
+  if(fBarco) list = list.filter(r=>r.barco===fBarco);
+  if(fEstado) list = list.filter(r=> computeEstado(r)===fEstado);
+  const wrap = document.getElementById('registrosList');
+  if(list.length===0){
+    wrap.innerHTML = `<div class="empty"><div class="ic">📋</div><p>No hay registros con estos filtros.</p></div>`;
+    return;
+  }
+  wrap.innerHTML = list.map(r=>{
+    const estado = computeEstado(r);
+    const badge = estadoBadge(estado);
+    return `<div class="ticket">
+      <span class="stamp ${badge.cls}">${badge.txt}</span>
+      <div class="ticket-top">
+        <div>
+          <div class="barco">${escapeHtml(r.barco)}</div>
+          <div class="meta">${fmtDate(r.fechaSalida)} · ${r.turno} · ${escapeHtml(r.tipoBarco||'')}</div>
+        </div>
+        <span class="visita">VISITA ${r.visita}</span>
+      </div>
+      <div class="perf"></div>
+      <div class="ticket-body">
+        <div class="ticket-mat">${escapeHtml(r.material)}</div>
+        <div class="ticket-row"><span>Retirado</span><b>BE ${num(r.buenEstado)} · 2U ${num(r.segundoUso)}</b></div>
+        <div class="ticket-row"><span>Destino</span><b>${escapeHtml(r.destino||'—')}</b></div>
+        <div class="ticket-row"><span>Responsable retiro</span><b>${escapeHtml(r.responsableRetiro||'—')}</b></div>
+        ${r.fechaEntrega ? `<div class="ticket-row"><span>Devuelto</span><b>${fmtDate(r.fechaEntrega)} · ${escapeHtml(r.responsableDevolucion||'—')}</b></div>` : ''}
+        ${r.observacionSalida ? `<div class="ticket-row"><span>Obs.</span><b>${escapeHtml(r.observacionSalida)}</b></div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ---------------- Nav / stats ---------------- */
+function showStorageBanner(){
+  const el = document.getElementById('storageBanner');
+  if(STORAGE_MODE === 'cloud') return; // modo compartido normal, sin aviso
+  el.style.display = 'block';
+  if(STORAGE_MODE === 'local'){
+    el.innerHTML = `<div class="storage-banner"><div class="banner">
+      <span>⚠️</span>
+      <div><b>Modo local</b>Este archivo se abrió fuera de Claude, así que los registros se guardan solo en este navegador/dispositivo (no se comparten con otros celulares o PCs). Usa "Descargar Excel" seguido para no perder información.</div>
+    </div></div>`;
+  } else {
+    el.innerHTML = `<div class="storage-banner"><div class="banner" style="background:var(--red-bg); border-color:#F0C9C4; color:#8A2E1F;">
+      <span>🚨</span>
+      <div><b>Modo temporal — sin guardado persistente</b>Tu navegador está bloqueando el almacenamiento en este archivo (pasa a veces al abrirlo con doble clic). La app va a funcionar durante esta sesión, pero <b style="display:inline;">se borra todo si cierras o recargas la pestaña</b>. Exporta a Excel seguido con el botón de la pestaña Registros para no perder nada.</div>
+    </div></div>`;
+  }
+}
+
+function switchView(v){
+  currentView = v;
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  document.querySelectorAll('nav.tabbar button').forEach(b=>b.classList.toggle('active', b.dataset.view===v));
+  renderAll();
+}
+
+function updateStats(){
+  document.getElementById('statTotal').textContent = RECORDS.length;
+  const pend = RECORDS.filter(r=>computeEstado(r)==='PENDIENTE').length;
+  const revisar = RECORDS.filter(r=>computeEstado(r)==='REVISAR').length;
+  const reparar = RECORDS.filter(r=> num(r.devPorReparar)>0 && repEstado(r)!=='COMPLETO').length;
+  document.getElementById('statPend').textContent = pend;
+  document.getElementById('statRevisar').textContent = revisar;
+  document.getElementById('statReparar').textContent = reparar;
+
+  const devBadge = document.getElementById('navBadgeDev');
+  const devCount = RECORDS.filter(r=> r.conRetorno==='CON RETORNO' && !r.fechaEntrega).length;
+  if(devCount>0){ devBadge.style.display='flex'; devBadge.textContent = devCount>9?'9+':devCount; } else devBadge.style.display='none';
+
+  const repBadge = document.getElementById('navBadgeRep');
+  if(reparar>0){ repBadge.style.display='flex'; repBadge.textContent = reparar>9?'9+':reparar; } else repBadge.style.display='none';
+}
+
+function renderAll(){
+  updateStats();
+  if(currentView==='devolucion') renderDevolucion();
+  if(currentView==='reparacion') renderReparacion();
+  if(currentView==='ubicacion') renderUbicacion();
+  if(currentView==='registros') renderRegistros();
+}
+
+/* ---------------- Clock ---------------- */
+function tickClock(){
+  const d = new Date();
+  const hh = String(d.getHours()).padStart(2,'0');
+  const mm = String(d.getMinutes()).padStart(2,'0');
+  document.getElementById('clockPill').textContent = `${hh}:${mm} · TURNO ${d.getHours()>=7 && d.getHours()<19 ? 'DÍA' : 'NOCHE'}`;
+}
+
+/* ---------------- Export to Excel ---------------- */
+function buildExportWorkbook(){
+  const headers = ['Fecha Salida','Turno','Barco','Tipo de Barco','#Visita','Descripción Material',
+    'Buen estado','2do Uso','Con retorno?','Destino / Ubicación','Motivo Solicitud','Responsable Retiro',
+    'Firma','Supervisor Responsable','Observacion','Fecha Entrega','Buen Estado','2do Uso','Por reparar',
+    'De Baja','Total Devuelto','Diferencia (Pendiente)','Estado','Responsable Devolución','Supervisor Responsable','Observación'];
+
+  const rows = RECORDS.slice().sort((a,b)=> (a.fechaSalida||'').localeCompare(b.fechaSalida||'')).map(r=>{
+    const totalOut = num(r.buenEstado)+num(r.segundoUso);
+    const totalDev = r.fechaEntrega ? (num(r.devBuenEstado)+num(r.devSegundoUso)+num(r.devPorReparar)+num(r.devDeBaja)) : '';
+    const diff = r.fechaEntrega ? (totalOut - totalDev) : '';
+    const estado = computeEstado(r);
+    const estadoTxt = estado==='OK'?'✓ OK':estado==='PENDIENTE'?'⏳ Pendiente':estado==='REVISAR'?'⚠ Revisar':'✔ Descontado (Sin Retorno)';
+    return [
+      r.fechaSalida, r.turno, r.barco, r.tipoBarco, r.visita, r.material,
+      num(r.buenEstado), num(r.segundoUso), r.conRetorno, r.destino, r.motivo, r.responsableRetiro,
+      r.firma, r.supervisorSalida, r.observacionSalida,
+      r.fechaEntrega || '', r.devBuenEstado ?? '', r.devSegundoUso ?? '', r.devPorReparar ?? '', r.devDeBaja ?? '',
+      '', '', '',  // U,V,W left blank — formulas already exist in master file
+      r.responsableDevolucion || '', r.supervisorDevolucion || '', r.observacionDevolucion || ''
+    ];
+  });
+
+  const ws1 = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  ws1['!cols'] = headers.map(()=>({wch:16}));
+
+  const repHeaders = ['Barco','#Visita','Fecha Salida','Descripción Material','Cantidad Por Reparar','Fecha Reparación','Cantidad Reparada'];
+  const repRows = [];
+  RECORDS.forEach(r=>{
+    if(num(r.devPorReparar)>0){
+      if(r.reparaciones && r.reparaciones.length){
+        r.reparaciones.forEach(rp=>{
+          repRows.push([r.barco, r.visita, r.fechaSalida, r.material, r.devPorReparar, rp.fecha, rp.cantidad]);
+        });
+      } else {
+        repRows.push([r.barco, r.visita, r.fechaSalida, r.material, r.devPorReparar, '', '']);
+      }
+    }
+  });
+  const ws2 = XLSX.utils.aoa_to_sheet([repHeaders, ...repRows]);
+  ws2['!cols'] = repHeaders.map(()=>({wch:18}));
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws1, 'SALIDA Y DEVOLUCION');
+  XLSX.utils.book_append_sheet(wb, ws2, 'REPARACIONES (ref)');
+  return wb;
+}
+
+function exportExcel(){
+  if(RECORDS.length===0){ showToast('No hay registros para exportar'); return; }
+  const wb = buildExportWorkbook();
+  const fecha = todayISO();
+  XLSX.writeFile(wb, `Control_TR_captura_${fecha}.xlsx`);
+  showToast('Excel descargado');
+}
+
+/* ---------------- Init ---------------- */
+async function init(){
+  showStorageBanner();
+  populateStaticLists();
+  buildCategoryChips();
+  await loadAllRecords();
+  initSalidaForm();
+  updateStats();
+
+  document.querySelectorAll('nav.tabbar button').forEach(btn=>{
+    btn.addEventListener('click', ()=> switchView(btn.dataset.view));
+  });
+  document.getElementById('d_filtroBarco').addEventListener('change', renderDevolucion);
+  document.getElementById('r_filtroBarco').addEventListener('change', renderRegistros);
+  document.getElementById('r_filtroEstado').addEventListener('change', renderRegistros);
+  document.getElementById('btnExport').addEventListener('click', exportExcel);
+  document.getElementById('ub_filtroUbicacion').addEventListener('change', renderUbicacion);
+  document.getElementById('btnExportUbicacionPdf').addEventListener('click', exportUbicacionPdf);
+  initUbicacionForm();
+  document.getElementById('devModal').addEventListener('click', (e)=>{ if(e.target.id==='devModal') closeDevModal(); });
+  document.getElementById('repModal').addEventListener('click', (e)=>{ if(e.target.id==='repModal') closeRepModal(); });
+  document.getElementById('scanModal').addEventListener('click', (e)=>{ if(e.target.id==='scanModal') closeScanModal(); });
+  document.getElementById('catalogModal').addEventListener('click', (e)=>{ if(e.target.id==='catalogModal') closeCatalogModal(); });
+
+  document.getElementById('btnOpenScan').addEventListener('click', ()=>{
+    openScanModal('cart').catch(e=>{
+      console.error('Error abriendo el escáner', e);
+      showToast('No se pudo abrir el escáner: ' + (e && e.message ? e.message : 'revisa la consola'));
+    });
+  });
+  document.getElementById('btnOpenCatalog').addEventListener('click', openCatalogModal);
+  document.getElementById('scan_manualBtn').addEventListener('click', ()=>{
+    const inp = document.getElementById('scan_manual');
+    if(scanMode==='ficha'){
+      const item = findMaterial(inp.value);
+      if(!item){ showToast('Material no encontrado: "' + inp.value + '"'); return; }
+      renderFichaCard(item);
+      inp.value='';
+      closeScanModal();
+      switchView('ficha');
+    } else {
+      addFromQuery(inp.value, inp);
+    }
+  });
+  document.getElementById('scan_manual').addEventListener('keydown', (e)=>{
+    if(e.key==='Enter'){ e.preventDefault(); document.getElementById('scan_manualBtn').click(); }
+  });
+  document.getElementById('cat_search').addEventListener('input', renderCatalog);
+
+  document.getElementById('btnOpenScanFicha').addEventListener('click', ()=>{
+    openScanModal('ficha').catch(e=>{
+      console.error('Error abriendo el escáner', e);
+      showToast('No se pudo abrir el escáner: ' + (e && e.message ? e.message : 'revisa la consola'));
+    });
+  });
+  document.getElementById('fi_searchBtn').addEventListener('click', ()=>{
+    const inp = document.getElementById('fi_input');
+    addFichaFromQuery(inp.value, inp);
+  });
+  document.getElementById('fi_input').addEventListener('keydown', (e)=>{
+    if(e.key==='Enter'){ e.preventDefault(); document.getElementById('fi_searchBtn').click(); }
+  });
+
+  tickClock();
+  setInterval(tickClock, 30000);
+}
+
+/* ---------------- Scanner (cámara) ---------------- */
+async function openScanModal(mode){
+  scanMode = mode || 'cart';
+  document.getElementById('scanModal').classList.add('show');
+  document.getElementById('scanLastMatch').classList.remove('show');
+  const statusEl = document.getElementById('scanStatus');
+  const videoEl = document.getElementById('scanVideo');
+  document.getElementById('scanModalTitle').textContent = scanMode==='ficha' ? 'Consultar Material' : 'Escanear Material';
+
+  if(!('mediaDevices' in navigator) || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    statusEl.innerHTML = '📵 Este navegador no expone acceso a la cámara en esta página (pasa a veces con archivos abiertos localmente en algunos navegadores). Usa el código manual de abajo — funciona igual de bien, incluso con un lector físico USB/Bluetooth.';
+    document.getElementById('scanFrame').style.display = 'none';
+    document.getElementById('scan_manual').focus();
+    return;
+  }
+  document.getElementById('scanFrame').style.display = '';
+  statusEl.textContent = 'Solicitando acceso a la cámara...';
+
+  try{
+    scanStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+    videoEl.srcObject = scanStream;
+    await videoEl.play();
+  }catch(e){
+    console.error('Error de cámara', e);
+    if(e && e.name === 'NotAllowedError'){
+      statusEl.textContent = 'Bloqueaste el permiso de cámara para esta página. Revisa el ícono de candado/cámara junto a la barra de direcciones (o Ajustes del navegador → Permisos del sitio) y permite el acceso, luego vuelve a intentar. Mientras tanto, usa el código manual abajo.';
+    } else if(e && e.name === 'NotFoundError'){
+      statusEl.textContent = 'No se encontró una cámara en este dispositivo. Usa el código manual abajo.';
+    } else if(e && (e.name === 'NotSupportedError' || e.name === 'SecurityError')){
+      statusEl.textContent = 'Este navegador bloqueó el acceso a la cámara para archivos abiertos localmente (' + e.name + '). Usa el código manual abajo, o pide que alojemos la app con https para que la cámara funcione siempre.';
+    } else {
+      statusEl.textContent = 'No se pudo acceder a la cámara (' + (e && e.name ? e.name : 'error desconocido') + '). Usa el código manual abajo.';
+    }
+    document.getElementById('scanFrame').style.display = 'none';
+    return;
+  }
+
+  if('BarcodeDetector' in window){
+    try{
+      scanDetector = new BarcodeDetector({formats:['code_128','ean_13','code_39','qr_code']});
+      statusEl.textContent = 'Apunta la cámara al código de barras';
+      scanLastCode = null;
+      scanLoop();
+    }catch(e){
+      console.error('Error iniciando BarcodeDetector', e);
+      statusEl.textContent = 'La cámara está activa, pero este navegador no trae lectura automática de códigos. Escribe el código que veas en el campo manual de abajo.';
+    }
+  } else {
+    statusEl.textContent = 'La cámara está activa (típico en iPhone/Safari, que no trae lectura automática). Escribe el código que veas en el campo manual de abajo.';
+  }
+}
+
+async function scanLoop(){
+  const videoEl = document.getElementById('scanVideo');
+  if(!scanStream || !scanDetector) return;
+  try{
+    const codes = await scanDetector.detect(videoEl);
+    if(codes && codes.length){
+      const raw = codes[0].rawValue;
+      const now = Date.now();
+      if(raw !== scanLastCode || now - scanLastTime > 1500){
+        scanLastCode = raw;
+        scanLastTime = now;
+        const item = findMaterial(raw);
+        const box = document.getElementById('scanLastMatch');
+        if(item){
+          if(scanMode === 'ficha'){
+            renderFichaCard(item);
+            box.textContent = '✓ ' + item.name + ' — ver ficha abajo';
+            box.classList.add('show');
+            closeScanModal();
+            switchView('ficha');
+            return;
+          } else {
+            addToCart(item);
+            box.textContent = '✓ ' + item.name;
+            box.classList.add('show');
+          }
+        } else {
+          box.textContent = '⚠ Código no reconocido: ' + raw;
+          box.classList.add('show');
+        }
+      }
+    }
+  }catch(e){ /* frame decode errors are normal, ignore */ }
+  scanLoopId = requestAnimationFrame(()=> setTimeout(scanLoop, 350));
+}
+
+function closeScanModal(){
+  document.getElementById('scanModal').classList.remove('show');
+  if(scanLoopId) cancelAnimationFrame(scanLoopId);
+  scanLoopId = null;
+  scanDetector = null;
+  if(scanStream){
+    scanStream.getTracks().forEach(t=>t.stop());
+    scanStream = null;
+  }
+}
+
+/* ---------------- Catálogo de códigos ---------------- */
+function openCatalogModal(){
+  document.getElementById('catalogModal').classList.add('show');
+  document.getElementById('cat_search').value = '';
+  renderCatalog();
+}
+function closeCatalogModal(){
+  document.getElementById('catalogModal').classList.remove('show');
+}
+function renderCatalog(){
+  const q = document.getElementById('cat_search').value.trim().toUpperCase();
+  const wrap = document.getElementById('catalogList');
+  const items = q ? MATERIAL_ITEMS.filter(it=> it.name.toUpperCase().includes(q) || it.code.includes(q)) : MATERIAL_ITEMS;
+  const shown = items.slice(0, 60);
+  if(shown.length===0){
+    wrap.innerHTML = '<p class="hint">Sin resultados.</p>';
+    return;
+  }
+  wrap.innerHTML = shown.map(it=>`
+    <div class="cat-item">
+      <div>
+        <div class="cat-name">${escapeHtml(it.name)}</div>
+        <svg id="bc-${it.code}"></svg>
+      </div>
+      <button type="button" class="btn btn-ghost btn-small" onclick="addFromQuery('${it.code}')">+ Agregar</button>
+    </div>
+  `).join('') + (items.length>60 ? `<p class="hint">Mostrando 60 de ${items.length} resultados — sigue escribiendo para filtrar.</p>` : '');
+
+  shown.forEach(it=>{
+    try{
+      JsBarcode('#bc-'+it.code, it.code, {format:'CODE128', width:1.3, height:28, fontSize:9, margin:2});
+    }catch(e){ /* ignore render errors for a single code */ }
+  });
+}
+
+/* ---------------- Manejo global de errores no previstos ---------------- */
+window.addEventListener('error', (e)=>{
+  console.error('Error no manejado', e.error || e.message);
+  showToast('Ocurrió un error inesperado: ' + (e.message || 'revisa la consola (F12)'));
+});
+window.addEventListener('unhandledrejection', (e)=>{
+  console.error('Promesa rechazada sin manejar', e.reason);
+  showToast('Ocurrió un error inesperado: ' + (e.reason && e.reason.message ? e.reason.message : 'revisa la consola (F12)'));
+});
+
+init();
+
+</script>
+</body>
+</html>
