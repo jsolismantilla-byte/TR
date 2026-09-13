@@ -505,7 +505,7 @@ select#materialSelect, input#materialInput{font-size:14px;}
   <div class="topbar-row">
     <div class="brand">
       <span class="eyebrow">COSCO SHIPPING Ports Chancay · TR</span>
-      <h1>Control de Aparejos</h1>
+      <h1>Control TR</h1>
     </div>
     <div class="topbar-actions">
       <button type="button" class="icon-btn" id="btnOpenAdmin" title="Agregar barco, material, responsable o ubicación">⚙️</button>
@@ -1881,15 +1881,18 @@ function renderCart(){
   wrap.innerHTML = CART.map((c,i)=>{
     const disponible = getDisponibleParaMaterial(c.code);
     const dispTxt = isFinite(disponible) ? disponible : '—';
+    const excede = (c.buen + c.dosUso) > disponible;
+    const warnStyle = excede ? 'border-color:var(--red); color:var(--red);' : '';
     return `
     <div class="cart-item">
       <div class="ci-info">
         <div class="ci-name">${escapeHtml(c.name)}</div>
-        <div class="ci-code mono">${c.code} <span style="color:var(--ink-soft); font-weight:400;">· disp: ${dispTxt}</span></div>
+        <div class="ci-code mono">${c.code} <span style="color:${excede?'var(--red)':'var(--ink-soft)'}; font-weight:${excede?'700':'400'};">· disp: ${dispTxt}</span></div>
+        ${excede ? `<div style="color:var(--red); font-size:11.5px; font-weight:600; margin-top:2px;">⚠ Supera lo disponible — corrige la cantidad para poder guardar</div>` : ''}
       </div>
       <div class="ci-qty">
-        <div class="qtybox"><label>B.E.</label><input type="number" min="0" max="${isFinite(disponible)?Math.max(disponible,0):''}" value="${c.buen}" onchange="updateCartQty(${i},'buen',this.value)"></div>
-        <div class="qtybox"><label>2do U.</label><input type="number" min="0" max="${isFinite(disponible)?Math.max(disponible,0):''}" value="${c.dosUso}" onchange="updateCartQty(${i},'dosUso',this.value)"></div>
+        <div class="qtybox"><label>B.E.</label><input type="number" min="0" style="${warnStyle}" value="${c.buen}" onchange="updateCartQty(${i},'buen',this.value)"></div>
+        <div class="qtybox"><label>2do U.</label><input type="number" min="0" style="${warnStyle}" value="${c.dosUso}" onchange="updateCartQty(${i},'dosUso',this.value)"></div>
       </div>
       <button type="button" class="ci-rm" onclick="removeFromCart(${i})">✕</button>
     </div>
@@ -1898,15 +1901,11 @@ function renderCart(){
 }
 function updateCartQty(i, field, val){
   const c = CART[i];
-  let newVal = Math.max(0, num(val));
-  const otherField = field==='buen' ? 'dosUso' : 'buen';
+  c[field] = Math.max(0, num(val));
   const disponible = getDisponibleParaMaterial(c.code);
-  if(newVal + c[otherField] > disponible){
-    const maxAllowed = Math.max(0, disponible - c[otherField]);
-    showToast(`⚠ Solo hay ${Math.max(disponible,0)} disponible(s) de "${c.name}". Se ajustó a ${maxAllowed}.`);
-    newVal = maxAllowed;
+  if((c.buen + c.dosUso) > disponible){
+    showToast(`⚠ "${c.name}": pides ${c.buen + c.dosUso}, solo hay ${Math.max(disponible,0)} disponible(s). No podrás guardar la salida hasta corregirlo.`);
   }
-  c[field] = newVal;
   renderCart();
 }
 function removeFromCart(i){
