@@ -788,6 +788,13 @@ function findMaterial(query){
   return null;
 }
 
+/* ======= CONEXIÓN AL BACKEND (Google Apps Script) =======
+   Pega aquí, entre las comillas, la URL que te dio Google al implementar
+   el Apps Script (termina en /exec). Mientras esté vacía, la app funciona
+   en "modo local" (solo en este celular) para que puedas probarla. */
+const API_URL = 'https://script.google.com/macros/s/AKfycbw_0t4LWBC1Cd-s0JE6Acg3YjEqjCJ-iiRnyEm3WMwpGb756YQiRzY_8ICrOKIT8pc0DQ/exec';
+/* ========================================================= */
+
 const STORAGE_PREFIX = 'registro:';
 let RECORDS = [];
 let currentView = 'salida';
@@ -809,15 +816,17 @@ function uid(){
 }
 
 /* Capa de almacenamiento con 3 niveles de respaldo, de mejor a peor:
-   1) window.storage — dentro del entorno de Claude: persistente y compartido entre dispositivos.
-   2) localStorage — archivo abierto directo en el navegador: persistente, solo en ese navegador/dispositivo.
-      (Algunos navegadores bloquean localStorage cuando el archivo se abre como file://, así que se
-      prueba de verdad al iniciar, no solo se asume que existe.)
-   3) Memoria (variable en RAM) — último recurso si hasta localStorage falla: la app funciona durante
-      la sesión, pero se pierde todo al cerrar o recargar la pestaña. Se avisa claramente en pantalla. */
-const HAS_CLOUD_STORAGE = (typeof window.storage !== 'undefined' && window.storage && typeof window.storage.set === 'function');
+   1) API (Google Apps Script + Hoja de Google) — compartido de verdad entre TODOS los
+      celulares/PCs, sin necesidad de cuenta. Requiere haber pegado tu URL en API_URL arriba.
+   2) localStorage — persistente, pero solo en este navegador/dispositivo (si API_URL está
+      vacía, o el celular está sin internet en ese momento).
+   3) Memoria (variable en RAM) — último recurso: la app funciona durante la sesión, pero se
+      pierde todo al cerrar o recargar la pestaña. Se avisa claramente en pantalla.
+   La app siempre intenta la API primero si hay una URL configurada; si falla (sin señal,
+   URL mal pegada, etc.) cae a local/memoria automáticamente para esa operación puntual. */
 const LOCAL_PREFIX = 'controltr::';
 const MEMORY_STORE = {};
+const HAS_API = !!(API_URL && API_URL.trim());
 
 function localStorageWorks(){
   try{
@@ -829,52 +838,73 @@ function localStorageWorks(){
     return false;
   }
 }
-const HAS_LOCAL_STORAGE = !HAS_CLOUD_STORAGE && (typeof localStorage !== 'undefined') && localStorageWorks();
-const STORAGE_MODE = HAS_CLOUD_STORAGE ? 'cloud' : (HAS_LOCAL_STORAGE ? 'local' : 'memory');
+const HAS_LOCAL_STORAGE = (typeof localStorage !== 'undefined') && localStorageWorks();
+let STORAGE_MODE = HAS_API ? 'cloud' : (HAS_LOCAL_STORAGE ? 'local' : 'memory');
+let apiOffline = false; // true si la API está configurada pero no responde ahora mismo
 
-async function storageList(prefix, shared){
-  if(STORAGE_MODE === 'cloud') return await window.storage.list(prefix, shared);
-  if(STORAGE_MODE === 'local'){
-    const keys = [];
-    for(let i=0;i<localStorage.length;i++){
-      const k = localStorage.key(i);
-      if(k && k.startsWith(LOCAL_PREFIX + prefix)) keys.push(k.slice(LOCAL_PREFIX.length));
-    }
-    return {keys, prefix, shared};
+function localList(){
+  const keys = [];
+  for(let i=0;i<localStorage.length;i++){
+    const k = localStorage.key(i);
+    if(k && k.startsWith(LOCAL_PREFIX + STORAGE_PREFIX)) keys.push(k.slice(LOCAL_PREFIX.length));
   }
-  return {keys: Object.keys(MEMORY_STORE).filter(k=>k.startsWith(prefix)), prefix, shared};
+  return keys;
 }
-async function storageGet(key, shared){
-  if(STORAGE_MODE === 'cloud') return await window.storage.get(key, shared);
-  if(STORAGE_MODE === 'local'){
-    const raw = localStorage.getItem(LOCAL_PREFIX + key);
-    return raw === null ? null : {key, value: raw, shared};
+function localOrMemoryLoadAll(){
+  const out = [];
+  if(HAS_LOCAL_STORAGE){
+    localList().forEach(k=>{
+      try{ out.push(JSON.parse(localStorage.getItem(LOCAL_PREFIX + k))); }catch(e){}
+    });
+  } else {
+    Object.keys(MEMORY_STORE).forEach(k=>{
+      try{ out.push(JSON.parse(MEMORY_STORE[k])); }catch(e){}
+    });
   }
-  return MEMORY_STORE.hasOwnProperty(key) ? {key, value: MEMORY_STORE[key], shared} : null;
+  return out;
 }
-async function storageSet(key, value, shared){
-  if(STORAGE_MODE === 'cloud') return await window.storage.set(key, value, shared);
-  if(STORAGE_MODE === 'local'){
-    localStorage.setItem(LOCAL_PREFIX + key, value);
-    return {key, value, shared};
-  }
-  MEMORY_STORE[key] = value;
-  return {key, value, shared};
+function localOrMemorySave(rec){
+  const json = JSON.stringify(rec);
+  if(HAS_LOCAL_STORAGE){ localStorage.setItem(LOCAL_PREFIX + STORAGE_PREFIX + rec.id, json); }
+  else { MEMORY_STORE[STORAGE_PREFIX + rec.id] = json; }
+}
+
+/* Evita el preflight CORS de Apps Script: se manda como texto plano
+   (Content-Type "simple") y el backend igual lo interpreta como JSON. */
+async function apiPost(payload){
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    headers: {'Content-Type': 'text/plain;charset=utf-8'},
+    body: JSON.stringify(payload)
+  });
+  const data = await res.json();
+  if(!data || data.ok !== true) throw new Error((data && data.error) || 'Respuesta inválida de la API');
+  return data;
+}
+async function apiGetList(){
+  const res = await fetch(API_URL + '?action=list', {method:'GET'});
+  const data = await res.json();
+  if(!data || data.ok !== true) throw new Error((data && data.error) || 'Respuesta inválida de la API');
+  return data.records || [];
 }
 
 async function loadAllRecords(){
-  try{
-    const listRes = await storageList(STORAGE_PREFIX, true);
-    const keys = (listRes && listRes.keys) ? listRes.keys : [];
-    const out = [];
-    for(const k of keys){
-      try{
-        const res = await storageGet(k, true);
-        if(res && res.value){
-          out.push(JSON.parse(res.value));
-        }
-      }catch(e){ /* skip unreadable key */ }
+  if(HAS_API){
+    try{
+      const out = apiGetList ? await apiGetList() : [];
+      out.sort((a,b)=> (a.fechaSalida||'').localeCompare(b.fechaSalida||'') || (a.createdAt||0)-(b.createdAt||0));
+      RECORDS = out;
+      if(apiOffline){ apiOffline = false; showStorageBanner(); }
+      return;
+    }catch(e){
+      console.error('No se pudo conectar con la API, usando copia local', e);
+      apiOffline = true;
+      showStorageBanner();
+      // sigue abajo y carga lo último que haya en este dispositivo, para no dejar la app vacía
     }
+  }
+  try{
+    const out = localOrMemoryLoadAll();
     out.sort((a,b)=> (a.fechaSalida||'').localeCompare(b.fechaSalida||'') || (a.createdAt||0)-(b.createdAt||0));
     RECORDS = out;
   }catch(e){
@@ -885,15 +915,44 @@ async function loadAllRecords(){
 }
 
 async function saveRecord(rec){
+  if(HAS_API){
+    try{
+      await apiPost({id: rec.id, record: rec});
+      if(apiOffline){ apiOffline = false; showStorageBanner(); }
+      // guarda también una copia local por si el celular se queda sin señal luego
+      try{ localOrMemorySave(rec); }catch(e){}
+      return true;
+    }catch(e){
+      console.error('Error guardando en la API, se guarda solo en este dispositivo', e);
+      apiOffline = true;
+      showStorageBanner();
+      showToast('Sin conexión con el servidor: se guardó solo en este celular. Vuelve a intentar cuando tengas señal.');
+      try{ localOrMemorySave(rec); return true; }catch(err){ return false; }
+    }
+  }
   try{
-    const res = await storageSet(STORAGE_PREFIX + rec.id, JSON.stringify(rec), true);
-    if(!res){ showToast('No se pudo guardar el registro'); return false; }
+    localOrMemorySave(rec);
     return true;
   }catch(e){
     console.error(e);
     showToast('Error al guardar: ' + (e && e.message ? e.message : 'revisa la consola'));
     return false;
   }
+}
+
+/* Refresco periódico: como la API no empuja cambios en vivo (no hay
+   websockets), la app pregunta cada cierto tiempo si hay novedades de
+   otros celulares, además de al cambiar de pestaña. */
+function startAutoRefresh(){
+  if(!HAS_API) return;
+  setInterval(async ()=>{
+    if(document.hidden) return;
+    await loadAllRecords();
+    renderAll();
+  }, 20000);
+  document.addEventListener('visibilitychange', async ()=>{
+    if(!document.hidden){ await loadAllRecords(); renderAll(); }
+  });
 }
 
 /* ---------------- Utility ---------------- */
@@ -1087,7 +1146,7 @@ function addToCart(item){
 function computeLiveStats(item){
   const K = num(item.stockInicial);
   const recs = RECORDS.filter(r=> r.material===item.name);
-  let sinRetornoG=0, sinRetornoH=0, devSegundoUsoSum=0, devPorRepararSum=0, repTotalSum=0, N=0, O=0;
+  let sinRetornoG=0, sinRetornoH=0, devSegundoUsoSum=0, devPorRepararSum=0, deBajaSum=0, repTotalSum=0, N=0, O=0;
   recs.forEach(r=>{
     if(r.conRetorno==='SIN RETORNO'){
       sinRetornoG += num(r.buenEstado);
@@ -1095,16 +1154,23 @@ function computeLiveStats(item){
     }
     devSegundoUsoSum += num(r.devSegundoUso);
     devPorRepararSum += num(r.devPorReparar);
+    deBajaSum += num(r.devDeBaja);
     repTotalSum += repTotal(r);
-    const movimiento = num(r.buenEstado) + num(r.segundoUso) - num(r.devBuenEstado) - num(r.devSegundoUso) - num(r.devDeBaja);
+    // "Por Reparar" ya cuenta como recibido (no sigue "en movimiento" con el barco):
+    // se resta junto con lo demás que sí volvió.
+    const movimiento = num(r.buenEstado) + num(r.segundoUso) - num(r.devBuenEstado) - num(r.devSegundoUso) - num(r.devPorReparar) - num(r.devDeBaja);
     if(r.conRetorno==='CON RETORNO' && num(r.buenEstado)>0) N += movimiento;
     if(r.conRetorno==='CON RETORNO' && num(r.segundoUso)>0) O += movimiento;
   });
   const R = devPorRepararSum - repTotalSum;           // Por Reparar (saldo pendiente)
-  const L = K - sinRetornoG - R;                      // Buen Estado — stock real
-  const M2 = devSegundoUsoSum - sinRetornoH;           // 2da Vida — stock real
-  const P = L - N;                                    // Buen Estado — disponible en TR
-  const Q = M2 - O;                                    // 2da Vida — disponible en TR
+  // Stock Real = todo lo que sigue siendo tuyo: buen estado + en movimiento + por reparar.
+  // Solo se excluye lo consumido sin retorno y lo dado de baja (eso sí ya no es tuyo).
+  const L = K - sinRetornoG - deBajaSum;              // Buen Estado — stock real
+  const M2 = devSegundoUsoSum - sinRetornoH;          // 2da Vida — stock real
+  // Disponible = Stock Real menos lo que no puedes despachar ahora mismo
+  // (está prestado, o está en reparación).
+  const P = L - N - R;                                // Buen Estado — disponible en TR
+  const Q = M2 - O;                                   // 2da Vida — disponible en TR
   return {
     stockReal: L + M2,
     enMovimiento: N + O,
@@ -1784,17 +1850,22 @@ function renderRegistros(){
 /* ---------------- Nav / stats ---------------- */
 function showStorageBanner(){
   const el = document.getElementById('storageBanner');
-  if(STORAGE_MODE === 'cloud') return; // modo compartido normal, sin aviso
+  if(STORAGE_MODE === 'cloud' && !apiOffline){ el.style.display='none'; el.innerHTML=''; return; } // compartido y en línea, sin aviso
   el.style.display = 'block';
-  if(STORAGE_MODE === 'local'){
+  if(STORAGE_MODE === 'cloud' && apiOffline){
+    el.innerHTML = `<div class="storage-banner"><div class="banner" style="background:var(--amber-bg); border-color:#EFCFA0; color:#8A5B14;">
+      <span>📶</span>
+      <div><b>Sin conexión con el servidor</b>No se pudo contactar la base de datos compartida ahora mismo (revisa tu señal/wifi). Mientras tanto se está guardando solo en este celular; en cuanto vuelva la conexión, sigue usando la app normal — lo que falte sincronizar puedes reintentarlo o registrarlo de nuevo.</div>
+    </div></div>`;
+  } else if(STORAGE_MODE === 'local'){
     el.innerHTML = `<div class="storage-banner"><div class="banner">
       <span>⚠️</span>
-      <div><b>Modo local</b>Este archivo se abrió fuera de Claude, así que los registros se guardan solo en este navegador/dispositivo (no se comparten con otros celulares o PCs). Usa "Descargar Excel" seguido para no perder información.</div>
+      <div><b>Modo local — sin compartir</b>Todavía no está configurada la conexión al servidor compartido (API_URL), así que los registros se guardan solo en este navegador/dispositivo. Usa "Descargar Excel" seguido para no perder información, o pide que se termine de configurar el servidor.</div>
     </div></div>`;
   } else {
     el.innerHTML = `<div class="storage-banner"><div class="banner" style="background:var(--red-bg); border-color:#F0C9C4; color:#8A2E1F;">
       <span>🚨</span>
-      <div><b>Modo temporal — sin guardado persistente</b>Tu navegador está bloqueando el almacenamiento en este archivo (pasa a veces al abrirlo con doble clic). La app va a funcionar durante esta sesión, pero <b style="display:inline;">se borra todo si cierras o recargas la pestaña</b>. Exporta a Excel seguido con el botón de la pestaña Registros para no perder nada.</div>
+      <div><b>Modo temporal — sin guardado persistente</b>Tu navegador está bloqueando el almacenamiento en este archivo. La app va a funcionar durante esta sesión, pero <b style="display:inline;">se borra todo si cierras o recargas la pestaña</b>. Exporta a Excel seguido con el botón de la pestaña Registros para no perder nada.</div>
     </div></div>`;
   }
 }
@@ -1898,10 +1969,11 @@ function exportExcel(){
 
 /* ---------------- Init ---------------- */
 async function init(){
-  showStorageBanner();
   populateStaticLists();
   buildCategoryChips();
   await loadAllRecords();
+  showStorageBanner();
+  startAutoRefresh();
   initSalidaForm();
   updateStats();
 
