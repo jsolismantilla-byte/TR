@@ -638,6 +638,7 @@ select#materialSelect, input#materialInput{font-size:14px;}
     <div class="filters">
       <select id="d_filtroBarco"><option value="">Todos los barcos</option></select>
     </div>
+    <button type="button" class="btn btn-primary" id="btnDevMasivaTodo" style="margin-bottom:12px;">✓ Devolver todo lo pendiente (en buen estado)</button>
     <div id="devolucionList"></div>
   </section>
 
@@ -753,6 +754,15 @@ select#materialSelect, input#materialInput{font-size:14px;}
     <button class="modal-close" onclick="closeDevModal()"></button>
     <h3>Registrar Devolución</h3>
     <div id="devModalBody"></div>
+  </div>
+</div>
+
+<!-- Devolución masiva (todo lo pendiente, o todo lo de un muelle/patio, en buen estado) -->
+<div class="modal-overlay" id="devMasivaModal">
+  <div class="modal-sheet">
+    <button class="modal-close" onclick="closeDevMasivaModal()"></button>
+    <h3>Devolución Masiva</h3>
+    <div id="devMasivaModalBody"></div>
   </div>
 </div>
 
@@ -931,6 +941,7 @@ let scanPollBusy = false;
 let scanLastCode = null;
 let scanLastTime = 0;
 let scanMode = 'cart'; // 'cart' (Salida) o 'ficha' (Consulta de material)
+let devMasivaTargetIds = [];
 
 /* ---------------- Storage helpers ---------------- */
 function uid(){
@@ -2067,6 +2078,9 @@ function renderDevolucion(){
           <span class="name">📍 ${escapeHtml(ubic)}</span>
           <span class="count">${items.length} pendiente${items.length===1?'':'s'}</span>
         </div>
+        <div style="background:var(--card); border:1px solid var(--line); border-top:none; padding:8px 14px;">
+          <button type="button" class="btn btn-ghost btn-small btn-devmasiva-group" data-ubic="${escapeHtml(ubic)}">✓ Devolver todo este muelle/patio (${items.length})</button>
+        </div>
         ${items.map(r=>`
           <div class="dev-item">
             <div class="mat">${escapeHtml(r.material)}</div>
@@ -2152,6 +2166,88 @@ function openDevModal(id){
   document.getElementById('devModal').classList.add('show');
 }
 function closeDevModal(){ document.getElementById('devModal').classList.remove('show'); devModalRecordId=null; }
+
+/* ---------------- Devolución masiva ----------------
+   Cierra de una sola vez todo lo pendiente (o todo lo de un muelle/patio,
+   si se pasa "ubicFiltro") asumiendo que vuelve completo y en buen estado.
+   Respeta el filtro de barco que ya esté puesto en la vista Devolución.
+   Si algún material viene observado/incompleto, esa se sigue cerrando
+   aparte, de forma individual, con "Registrar devolución". */
+function getDevolucionMasivaTargets(ubicFiltro){
+  const filtroBarco = document.getElementById('d_filtroBarco').value;
+  return RECORDS.filter(r=> r.conRetorno==='CON RETORNO' && !r.fechaEntrega
+    && (!filtroBarco || r.barco===filtroBarco)
+    && (!ubicFiltro || (r.destino || 'SIN UBICACIÓN')===ubicFiltro));
+}
+
+function openDevMasivaModal(ubicFiltro){
+  const targets = getDevolucionMasivaTargets(ubicFiltro);
+  if(targets.length===0){ showToast('No hay devoluciones pendientes para devolver'); return; }
+  devMasivaTargetIds = targets.map(r=>r.id);
+
+  const totalUnidades = targets.reduce((s,r)=> s + num(r.buenEstado) + num(r.segundoUso), 0);
+  const materialesUnicos = new Set(targets.map(r=>r.material)).size;
+  const filtroBarco = document.getElementById('d_filtroBarco').value;
+  const etiqueta = ubicFiltro ? ('📍 ' + ubicFiltro) : 'Todo lo pendiente' + (filtroBarco ? (' · ' + filtroBarco) : '');
+
+  const body = document.getElementById('devMasivaModalBody');
+  body.innerHTML = `
+    <div class="card" style="box-shadow:none;border:1px solid var(--line);margin-bottom:12px;padding:12px;">
+      <div class="ticket-mat" style="margin-bottom:2px;">${escapeHtml(etiqueta)}</div>
+      <div class="ticket-row"><span>${targets.length} registro${targets.length===1?'':'s'} · ${materialesUnicos} material${materialesUnicos===1?'':'es'}</span><b>${totalUnidades} und.</b></div>
+    </div>
+    <p class="hint">Se va a registrar la devolución de <b>todo</b> lo anterior asumiendo que vuelve completo y en <b>buen estado</b> (sin material observado). Si algo viene dañado, incompleto o de baja, ciérralo aparte de forma individual con "Registrar devolución".</p>
+    <div class="field">
+      <label>Fecha de Entrega</label>
+      <input type="date" id="dmm_fecha" value="${todayISO()}">
+    </div>
+    <div class="grid2">
+      <div class="field"><label>Responsable Devolución</label><select id="dmm_resp"></select></div>
+      <div class="field"><label>Supervisor Responsable</label><select id="dmm_sup"><option value="">— Opcional —</option></select></div>
+    </div>
+    <div class="field"><label>Observación</label><textarea id="dmm_obs" placeholder="Opcional"></textarea></div>
+    <button class="btn btn-primary" id="dmm_save">Confirmar devolución de ${targets.length} registro${targets.length===1?'':'s'}</button>
+  `;
+  const respSel = document.getElementById('dmm_resp');
+  respSel.innerHTML = RESPONSABLES.map(x=>`<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join('');
+  const supSel = document.getElementById('dmm_sup');
+  supSel.innerHTML += RESPONSABLES.map(x=>`<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join('');
+
+  document.getElementById('dmm_save').addEventListener('click', async ()=>{
+    const fecha = document.getElementById('dmm_fecha').value || todayISO();
+    const resp = document.getElementById('dmm_resp').value;
+    const sup = document.getElementById('dmm_sup').value;
+    const obs = document.getElementById('dmm_obs').value.trim();
+    if(!resp){ showToast('Selecciona el responsable de devolución'); return; }
+
+    const btn = document.getElementById('dmm_save');
+    btn.disabled = true;
+    btn.textContent = 'Guardando...';
+
+    let okCount = 0;
+    for(const id of devMasivaTargetIds){
+      const r = RECORDS.find(x=>x.id===id);
+      if(!r || r.fechaEntrega) continue; // ya se cerró individualmente mientras tanto: no se toca
+      r.fechaEntrega = fecha;
+      r.devBuenEstado = num(r.buenEstado);
+      r.devSegundoUso = num(r.segundoUso);
+      r.devPorReparar = 0;
+      r.devDeBaja = 0;
+      r.responsableDevolucion = resp;
+      r.supervisorDevolucion = sup;
+      r.observacionDevolucion = obs;
+      const ok = await saveRecord(r);
+      if(ok) okCount++;
+    }
+
+    showToast(`Devolución masiva registrada — ${okCount} registro${okCount===1?'':'s'}`);
+    closeDevMasivaModal();
+    renderAll();
+  });
+
+  document.getElementById('devMasivaModal').classList.add('show');
+}
+function closeDevMasivaModal(){ document.getElementById('devMasivaModal').classList.remove('show'); devMasivaTargetIds = []; }
 
 /* ---------------- Reparación view ---------------- */
 function renderReparacion(){
@@ -2445,6 +2541,12 @@ async function init(){
   document.getElementById('btnExportUbicacionPdf').addEventListener('click', exportUbicacionPdf);
   initUbicacionForm();
   document.getElementById('devModal').addEventListener('click', (e)=>{ if(e.target.id==='devModal') closeDevModal(); });
+  document.getElementById('devMasivaModal').addEventListener('click', (e)=>{ if(e.target.id==='devMasivaModal') closeDevMasivaModal(); });
+  document.getElementById('btnDevMasivaTodo').addEventListener('click', ()=> openDevMasivaModal(null));
+  document.getElementById('devolucionList').addEventListener('click', (e)=>{
+    const btn = e.target.closest('.btn-devmasiva-group');
+    if(btn) openDevMasivaModal(btn.dataset.ubic);
+  });
   document.getElementById('repModal').addEventListener('click', (e)=>{ if(e.target.id==='repModal') closeRepModal(); });
   document.getElementById('scanModal').addEventListener('click', (e)=>{ if(e.target.id==='scanModal') closeScanModal(); });
   document.getElementById('catalogModal').addEventListener('click', (e)=>{ if(e.target.id==='catalogModal') closeCatalogModal(); });
